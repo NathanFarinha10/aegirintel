@@ -71,10 +71,13 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// First run: prompt for Gemini API key
+// MODIFICADO: Prompt for Gemini API key sem travar a renderização
 if (!DB.settings.gemini_api_key) {
   setTimeout(function() {
-    if (!DB.settings.gemini_api_key) setModal('settings');
+    if (!DB.settings.gemini_api_key) {
+      setModal('settings');
+      render(); // Força a renderização para que a página não fique em branco
+    }
   }, 400);
 }
 
