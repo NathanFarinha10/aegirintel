@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aegir·Intel — CSS Test</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  /* Fallback: if fonts take too long, show with system fonts */
+  body { font-family: 'Geist', -apple-system, sans-serif !important; }
+</style>
+</head>
+<body class="grain">
+
+<div class="app" id="app">
+  <!-- Simulando a estrutura exata que render() gera -->
+  <header class="header">
+    <div style="display:flex;align-items:center">
+      <div class="logo">
+        <div class="logo-mark">Æ</div>
+        <div class="logo-text">Aegir<span class="dot">·</span>Intel</div>
+        <div class="logo-badge">CSS TEST</div>
+      </div>
+      <nav class="nav-main">
+        <button class="active">GLOBAL INTELLIGENCE</button>
+        <button>MACRO</button>
+        <button>SECURITIES</button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Test Section</div>
+        <div class="sidebar-nav">
+          <button class="active"><span class="num">01</span><span>Test Item</span></button>
+          <button><span class="num">02</span><span>Another Item</span></button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="content fade-up">
+      <div class="page-head">
+        <div class="page-kicker">CSS TEST</div>
+        <h1 class="page-title">Se você vê <em>este texto</em>, o CSS funciona</h1>
+        <p class="page-desc">Este é o layout exato da app com as classes CSS reais.</p>
+      </div>
+
+      <div class="card" style="padding:20px;margin-bottom:16px">
+        <h3>Card de teste</h3>
+        <p>Se este card aparece com borda e fundo, o CSS está correto.</p>
+      </div>
+
+      <div id="css-diag" style="font-family:monospace;font-size:12px;margin-top:20px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var diag = document.getElementById('css-diag');
+function log(msg) { diag.innerHTML += msg + '<br>'; }
+
+// Check computed styles of key elements
+var app = document.querySelector('.app');
+var header = document.querySelector('.header');
+var layout = document.querySelector('.main-layout');
+var sidebar = document.querySelector('.sidebar');
+var content = document.querySelector('.content');
+
+function inspect(name, el) {
+  if (!el) { log('<b style="color:red">✗ ' + name + ' não encontrado</b>'); return; }
+  var cs = getComputedStyle(el);
+  var visible = cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity) > 0;
+  var hasSize = el.offsetWidth > 0 && el.offsetHeight > 0;
+  log('<b style="color:' + (visible && hasSize ? 'green' : 'red') + '">' + (visible && hasSize ? '✓' : '✗') + ' ' + name + '</b>' +
+    ' | display:' + cs.display +
+    ' | visibility:' + cs.visibility +
+    ' | opacity:' + cs.opacity +
+    ' | size:' + el.offsetWidth + '×' + el.offsetHeight +
+    ' | overflow:' + cs.overflow + '/' + cs.overflowY +
+    ' | position:' + cs.position +
+    ' | z-index:' + cs.zIndex
+  );
+}
+
+inspect('.app', app);
+inspect('.header', header);
+inspect('.main-layout', layout);
+inspect('.sidebar', sidebar);
+inspect('.content', content);
+
+// Also check body
+var body = document.body;
+var bcs = getComputedStyle(body);
+log('<br><b>body</b> | overflow:' + bcs.overflow + ' | height:' + bcs.height + ' | bg:' + bcs.backgroundColor);
+log('<b>html</b> | overflow:' + getComputedStyle(document.documentElement).overflow + ' | height:' + getComputedStyle(document.documentElement).height);
+</script>
+
+</body>
+</html>
