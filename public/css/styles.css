@@ -460,8 +460,8 @@ input, select, textarea { font-family: inherit; color: inherit; }
 .empty-desc { color: var(--text-dim); font-size: 14px; max-width: 420px; margin: 0 auto 24px; line-height: 1.6; }
 .empty-desc strong { color: var(--amber); font-weight: normal; }
 
-.fade-up { animation: fadeUp 0.4s ease-out forwards; opacity: 1; }
-@keyframes fadeUp { from { opacity: 0.01; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fade-up { animation: fadeUp 0.4s ease-out both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .fade-up { animation: none; } }
 
 .pulse-mini { display: inline-block; vertical-align: middle; }
