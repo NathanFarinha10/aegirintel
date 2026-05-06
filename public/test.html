@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aegir·Intel — Teste</title>
+<style>
+body { margin: 0; font-family: sans-serif; background: #f8f6f3; color: #1a1815; }
+#test { padding: 40px; }
+h1 { font-size: 24px; margin-bottom: 16px; }
+.ok { color: green; font-weight: bold; }
+.fail { color: red; font-weight: bold; }
+pre { background: #e0dbd4; padding: 12px; font-size: 12px; white-space: pre-wrap; margin: 8px 0; }
+</style>
+</head>
+<body>
+<div id="test">
+<h1>Aegir·Intel — Diagnóstico</h1>
+<p>Se você consegue ver este texto, o servidor está funcionando.</p>
+<div id="results"></div>
+</div>
+
+<script>
+var results = document.getElementById('results');
+function log(msg, ok) {
+  var p = document.createElement('p');
+  p.className = ok ? 'ok' : 'fail';
+  p.textContent = (ok ? '✓ ' : '✗ ') + msg;
+  results.appendChild(p);
+}
+
+// Test 1: Basic rendering
+log('HTML renderiza corretamente', true);
+
+// Test 2: LocalStorage
+try {
+  localStorage.setItem('_test', '1');
+  localStorage.removeItem('_test');
+  log('LocalStorage funciona', true);
+} catch(e) {
+  log('LocalStorage BLOQUEADO: ' + e.message, false);
+}
+
+// Test 3: Can create DOM elements
+try {
+  var el = document.createElement('div');
+  el.style.background = 'green';
+  el.style.width = '100px';
+  el.style.height = '20px';
+  results.appendChild(el);
+  log('DOM createElement funciona', true);
+} catch(e) {
+  log('DOM createElement falhou: ' + e.message, false);
+}
+
+// Test 4: CSS Variables
+try {
+  document.documentElement.style.setProperty('--test-var', 'red');
+  var v = getComputedStyle(document.documentElement).getPropertyValue('--test-var');
+  log('CSS Variables: ' + (v.trim() === 'red' ? 'OK' : 'FALHOU (' + v + ')'), v.trim() === 'red');
+} catch(e) {
+  log('CSS Variables erro: ' + e.message, false);
+}
+
+// Test 5: CSS Animation
+try {
+  var style = document.createElement('style');
+  style.textContent = '@keyframes testAnim { from { opacity: 0 } to { opacity: 1 } } .test-anim { animation: testAnim 0.1s both; }';
+  document.head.appendChild(style);
+  var animEl = document.createElement('div');
+  animEl.className = 'test-anim';
+  animEl.textContent = 'ANIMAÇÃO';
+  animEl.style.background = '#d4a574';
+  animEl.style.padding = '8px';
+  animEl.style.display = 'inline-block';
+  results.appendChild(animEl);
+  setTimeout(function() {
+    var opacity = getComputedStyle(animEl).opacity;
+    log('CSS Animation opacity após 200ms: ' + opacity, parseFloat(opacity) > 0.5);
+  }, 200);
+} catch(e) {
+  log('CSS Animation erro: ' + e.message, false);
+}
+
+// Test 6: Fetch to CDN
+var t6 = Date.now();
+fetch('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', { method: 'HEAD' })
+  .then(function(r) { log('CDN fetch: ' + r.status + ' em ' + (Date.now()-t6) + 'ms', r.ok); })
+  .catch(function(e) { log('CDN fetch FALHOU: ' + e.message + ' (' + (Date.now()-t6) + 'ms)', false); });
+
+// Test 7: Fetch to own domain (worker)
+fetch(location.origin + '/js/core.js', { method: 'HEAD' })
+  .then(function(r) { log('Worker fetch: ' + r.status + ' em ' + (Date.now()-t6) + 'ms', r.ok); })
+  .catch(function(e) { log('Worker fetch FALHOU: ' + e.message, false); });
+
+// Test 8: UserAgent
+log('UserAgent: ' + navigator.userAgent, true);
+
+// Test 9: Cookies enabled
+log('Cookies: ' + (navigator.cookieEnabled ? 'OK' : 'BLOQUEADOS'), navigator.cookieEnabled);
+
+// Test 10: prefers-reduced-motion
+var motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+log('prefers-reduced-motion: ' + (motion.matches ? 'REDUCE (animações desabilitadas!)' : 'no-preference'), !motion.matches);
+</script>
+</body>
+</html>
