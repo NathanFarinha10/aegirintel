@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aegir·Intel — JS Test</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script>
+  window.loadPdfJs = async function() {
+    if (window.pdfjsLib) return window.pdfjsLib;
+    const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+    window.pdfjsLib = pdfjsLib;
+    return pdfjsLib;
+  };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" async></script>
+</head>
+<body class="grain">
+
+<div id="diag-output" style="position:fixed;top:0;left:0;right:0;background:#1a1815;color:#d4a574;font-family:monospace;font-size:11px;padding:12px;z-index:99999;max-height:50vh;overflow:auto"></div>
+
+<div class="app" id="app"></div>
+<div id="print-report"></div>
+
+<script>
+// Capture ALL errors including those from script loading
+window._diagLog = [];
+window.onerror = function(msg, src, line, col, err) {
+  var entry = 'ERROR: ' + msg + ' at ' + (src||'?').split('/').pop() + ':' + line;
+  window._diagLog.push(entry);
+  showDiag();
+  return false; // don't suppress
+};
+window.addEventListener('unhandledrejection', function(e) {
+  window._diagLog.push('UNHANDLED PROMISE: ' + (e.reason?.message || e.reason || 'unknown'));
+  showDiag();
+});
+function diagLog(msg) {
+  window._diagLog.push(msg);
+  showDiag();
+}
+function showDiag() {
+  var el = document.getElementById('diag-output');
+  if (el) el.innerHTML = window._diagLog.join('<br>');
+}
+diagLog('Boot: loading scripts...');
+</script>
+
+<script src="js/core.js" onerror="diagLog('FAILED to load core.js')"></script>
+<script>diagLog('core.js loaded. typeof h=' + typeof h + ', typeof render=' + typeof render + ', typeof DB=' + typeof DB);</script>
+
+<script src="js/intelligence.js" onerror="diagLog('FAILED to load intelligence.js')"></script>
+<script>diagLog('intelligence.js loaded. typeof renderIntHub=' + typeof renderIntHub + ', typeof NAV_SECTIONS=' + typeof NAV_SECTIONS);</script>
+
+<script src="js/securities.js" onerror="diagLog('FAILED to load securities.js')"></script>
+<script>diagLog('securities.js loaded. typeof brapiFetch=' + typeof brapiFetch);</script>
+
+<script src="js/macro.js" onerror="diagLog('FAILED to load macro.js')"></script>
+<script>diagLog('macro.js loaded. typeof renderMacroDashboard=' + typeof renderMacroDashboard + ', typeof formatBRL=' + typeof formatBRL);</script>
+
+<script src="js/assetmgmt.js" onerror="diagLog('FAILED to load assetmgmt.js')"></script>
+<script>diagLog('assetmgmt.js loaded. typeof renderMarketMonitor=' + typeof renderMarketMonitor + ', typeof parseCVMXml=' + typeof parseCVMXml);</script>
+
+<script>
+diagLog('All scripts loaded. Starting render test...');
+diagLog('DB = ' + JSON.stringify({reports: (DB||{}).reports?.length, views: (DB||{}).views?.length, settings: Object.keys((DB||{}).settings||{})}));
+diagLog('state.view = ' + (state||{}).view);
+
+// Step 1: Test renderHeader
+try {
+  var header = renderHeader();
+  diagLog('✓ renderHeader() OK — tag: ' + header.tagName + ', children: ' + header.children.length);
+} catch(e) {
+  diagLog('✗ renderHeader() FAILED: ' + e.message + ' at ' + (e.stack||'').split('\n')[1]);
+}
+
+// Step 2: Test renderSidebar
+try {
+  var sidebar = renderSidebar();
+  diagLog('✓ renderSidebar() OK — tag: ' + sidebar.tagName + ', children: ' + sidebar.children.length);
+} catch(e) {
+  diagLog('✗ renderSidebar() FAILED: ' + e.message + ' at ' + (e.stack||'').split('\n')[1]);
+}
+
+// Step 3: Test renderIntHub
+try {
+  var hub = renderIntHub();
+  diagLog('✓ renderIntHub() OK — tag: ' + hub.tagName + ', children: ' + hub.children.length + ', innerHTML.length: ' + hub.innerHTML.length);
+} catch(e) {
+  diagLog('✗ renderIntHub() FAILED: ' + e.message + ' at ' + (e.stack||'').split('\n')[1]);
+}
+
+// Step 4: Test full render()
+try {
+  diagLog('Calling render()...');
+  render();
+  var app = document.getElementById('app');
+  diagLog('✓ render() OK — app.children: ' + app.children.length + ', app.innerHTML.length: ' + app.innerHTML.length);
+  if (app.children.length > 0) {
+    for (var i = 0; i < Math.min(app.children.length, 5); i++) {
+      var c = app.children[i];
+      diagLog('  child[' + i + ']: ' + c.tagName + '.' + c.className + ' size:' + c.offsetWidth + '×' + c.offsetHeight + ' opacity:' + getComputedStyle(c).opacity);
+    }
+  }
+} catch(e) {
+  diagLog('✗ render() FAILED: ' + e.message);
+  diagLog('  Stack: ' + (e.stack||'').substring(0, 500));
+}
+
+// Step 5: Test setModal (this is what happens 400ms later for new users)
+setTimeout(function() {
+  diagLog('--- 400ms later: testing setModal("settings") ---');
+  try {
+    setModal('settings');
+    var app = document.getElementById('app');
+    diagLog('✓ setModal+render OK — app.children: ' + app.children.length);
+    var modals = document.querySelectorAll('.modal-bg');
+    diagLog('  Modals on page: ' + modals.length);
+    for (var i = 0; i < Math.min(app.children.length, 5); i++) {
+      var c = app.children[i];
+      diagLog('  child[' + i + ']: ' + c.tagName + '.' + c.className + ' size:' + c.offsetWidth + '×' + c.offsetHeight + ' visible:' + (c.offsetHeight > 0));
+    }
+  } catch(e) {
+    diagLog('✗ setModal FAILED: ' + e.message);
+    diagLog('  Stack: ' + (e.stack||'').substring(0, 500));
+  }
+}, 500);
+
+diagLog('Test sequence queued. Waiting for results...');
+</script>
+
+</body>
+</html>
