@@ -1,0 +1,2043 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FIDC · Estudo de Viabilidade</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c0a09; --paper:#faf8f4; --rule:#e7e2d6; --muted:#6b6358;
+    --accent:#8a2a2a; --accent2:#1f3a5f; --accent3:#a56b1f;
+    --pos:#14532d; --neg:#7f1d1d; --chip:#efeadb;
+  }
+  html,body{background:var(--paper);color:var(--ink);}
+  body{font-family:'Inter',sans-serif;font-feature-settings:"ss01","cv11";}
+  .serif{font-family:'Fraunces',serif;font-optical-sizing:auto;letter-spacing:-0.01em;}
+  .mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;}
+  .rule{border-color:var(--rule);}
+  .muted{color:var(--muted);}
+  .chip{background:var(--chip);}
+  .tab-active{background:var(--ink);color:var(--paper);border-radius:4px;transition:all .2s;}
+  .tab-active .dot{background:var(--paper);}
+  .tab{border-radius:4px;transition:all .15s;}
+  .tab:not(.tab-active):hover{background:var(--chip);}
+  input[type="number"],input[type="text"],select{
+    font-family:'JetBrains Mono',monospace;
+    background:#fff;border:1px solid var(--rule);padding:6px 10px;border-radius:4px;
+    width:100%;font-size:13px;transition:border-color .15s;
+  }
+  input[type="text"],select{font-family:'Inter',sans-serif;}
+  input[type="number"]:focus,input[type="text"]:focus,select:focus{outline:none;border-color:var(--ink);}
+  label.field{display:flex;flex-direction:column;gap:4px;}
+  label.field > span{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;}
+  .card{background:#fff;border:1px solid var(--rule);border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.03);}
+  .card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+  .btn{font-size:13px;font-weight:500;padding:8px 16px;border-radius:4px;transition:all .2s;cursor:pointer;}
+  .btn-primary{background:var(--ink);color:var(--paper);}
+  .btn-primary:hover{background:#1c1917;}
+  .btn-ghost{background:transparent;border:1px solid var(--rule);}
+  .btn-ghost:hover{background:var(--chip);}
+  .btn-small{font-size:11px;padding:4px 10px;}
+  table.fin{width:100%;font-size:12px;}
+  table.fin th,table.fin td{padding:6px 10px;text-align:right;white-space:nowrap;}
+  table.fin th{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--rule);position:sticky;top:0;background:#fff;z-index:2;}
+  table.fin td{border-bottom:1px solid #f3efe4;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;}
+  table.fin tr:hover td{background:#fbf8ef;}
+  table.fin td.label,table.fin th.label{text-align:left;font-family:'Inter',sans-serif;}
+  table.fin tr.total td{border-top:1px solid var(--ink);border-bottom:2px double var(--ink);font-weight:600;background:#fcfaf2;}
+  table.fin tr.subtotal td{border-top:1px solid var(--rule);font-weight:600;background:#fcfaf2;}
+  table.fin tr.section td{font-weight:600;background:#f3efe4;text-transform:uppercase;letter-spacing:0.06em;font-size:10px;font-family:'Inter',sans-serif;}
+  .neg{color:var(--neg);}
+  .pos{color:var(--pos);}
+  .hidden-tab{display:none;}
+  .scroll-x{overflow-x:auto;}
+  .kpi-val{font-family:'Fraunces',serif;font-weight:500;font-size:26px;line-height:1;letter-spacing:-0.02em;}
+  .kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);font-weight:600;}
+  .section-divider{border-top:2px solid var(--rule);padding-top:8px;margin-top:4px;margin-bottom:4px;}
+  .section-divider .section-title{font-size:10px;text-transform:uppercase;letter-spacing:0.15em;color:var(--muted);font-weight:600;}
+  .desp-row{display:grid;grid-template-columns:2fr 1.6fr 1fr auto;gap:8px;align-items:end;padding:10px;border:1px solid var(--rule);border-radius:4px;background:#fff;margin-bottom:8px;}
+  .ativo-row{display:grid;grid-template-columns:1.5fr 1.1fr 0.9fr 0.8fr 0.8fr 0.8fr 1fr auto;gap:8px;align-items:end;padding:10px;border:1px solid var(--rule);border-radius:4px;background:#fff;margin-bottom:8px;}
+  .evento-row{display:grid;grid-template-columns:1.2fr 1.3fr 1fr 0.9fr 0.9fr auto;gap:8px;align-items:end;padding:10px;border:1px solid var(--rule);border-radius:4px;background:#fff;margin-bottom:8px;}
+  .cenario-card{border:1px solid var(--rule);border-radius:6px;background:#fff;padding:16px;margin-bottom:12px;}
+  .cenario-card.active{border-color:var(--ink);border-width:2px;}
+  .cenario-adj{display:grid;grid-template-columns:1.8fr 1.3fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px;}
+  .desp-row .del,.ativo-row .del,.evento-row .del,.cenario-adj .del{background:transparent;border:1px solid var(--rule);width:28px;height:28px;border-radius:4px;cursor:pointer;color:var(--neg);font-size:16px;line-height:1;}
+  .desp-row .del:hover,.ativo-row .del:hover,.evento-row .del:hover,.cenario-adj .del:hover{background:#fee;}
+  .pill{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:99px;background:var(--chip);color:var(--muted);font-weight:600;}
+  .pill.warn{background:#fde68a;color:#92400e;}
+  .pill.ok{background:#d1fae5;color:#065f46;}
+  .pill.bad{background:#fecaca;color:#991b1b;}
+  .delta-pos{color:var(--pos);font-weight:600;}
+  .delta-neg{color:var(--neg);font-weight:600;}
+  .diff-bg-pos{background:#f0fdf4;}
+  .diff-bg-neg{background:#fef2f2;}
+
+  /* ========== RELATÓRIO PDF ========== */
+  .report-page{
+    background:#fff; width:210mm; min-height:297mm; margin:20px auto;
+    padding:18mm 16mm; box-shadow:0 4px 24px rgba(0,0,0,0.08);
+    page-break-after:always; position:relative;
+  }
+  .report-page:last-child{page-break-after:auto;}
+  .report-page h1{font-family:'Fraunces',serif;font-size:36px;line-height:1.1;letter-spacing:-0.02em;font-weight:600;}
+  .report-page h2{font-family:'Fraunces',serif;font-size:22px;letter-spacing:-0.01em;font-weight:600;margin-bottom:12px;border-bottom:2px solid var(--ink);padding-bottom:6px;}
+  .report-page h3{font-family:'Fraunces',serif;font-size:16px;font-weight:600;margin-bottom:8px;}
+  .report-page .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:var(--muted);font-weight:600;}
+  .report-kpi{border:1px solid var(--rule);padding:12px;border-radius:4px;}
+  .report-kpi .label{font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);font-weight:600;}
+  .report-kpi .value{font-family:'Fraunces',serif;font-size:22px;font-weight:500;line-height:1.1;margin-top:4px;}
+  .report-ficha-row{display:grid;grid-template-columns:1fr 2fr;gap:8px;padding:6px 0;border-bottom:1px dashed var(--rule);font-size:12px;}
+  .report-ficha-row .k{color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:0.06em;font-weight:600;}
+  .report-page table.fin{font-size:11px;}
+  .report-page table.fin th,.report-page table.fin td{padding:5px 8px;}
+  @media print{
+    body{background:#fff !important;}
+    header,nav,footer,#printControls,.card:not(.report-page *){display:none !important;}
+    main > section{display:none !important;}
+    main > section#tab-relatorio{display:block !important;}
+    main{max-width:none !important;padding:0 !important;margin:0 !important;}
+    .report-page{margin:0;box-shadow:none;width:auto;min-height:auto;padding:14mm;}
+    @page{size:A4;margin:0;}
+  }
+  .help-box{background:#f8f6ef;border:1px solid var(--rule);border-radius:4px;padding:12px 14px;font-size:12px;line-height:1.6;color:var(--muted);margin-top:12px;}
+  .help-box strong{color:var(--ink);font-weight:600;}
+  .help-box ul{margin:6px 0 0 16px;list-style:disc;}
+  .help-box li{margin-bottom:4px;}
+  details.help > summary{cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--accent2);font-weight:600;list-style:none;padding:4px 0;}
+  details.help > summary::-webkit-details-marker{display:none;}
+  details.help > summary::before{content:'▸ ';transition:transform .15s;}
+  details.help[open] > summary::before{content:'▾ ';}
+
+</style>
+</head>
+<body>
+
+<header class="border-b rule">
+  <div class="max-w-[1500px] mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-6">
+      <img src="data:image/png;base64,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" alt="Highpar" style="height:36px;width:auto;opacity:0.9;" />
+      <div style="width:1px;height:40px;background:var(--rule);"></div>
+      <div>
+        <div class="text-[10px] uppercase tracking-[0.2em] muted mb-0.5">Módulo de Análise Quantitativa</div>
+        <h1 class="serif text-2xl font-semibold" style="line-height:1.2;">Estudo de Viabilidade <span class="muted font-normal">— FIDC</span></h1>
+        <div class="text-xs muted mt-1" id="ficha" style="font-style:italic;">Preencha as premissas e clique em <strong style="font-style:normal;color:var(--ink)">Rodar Simulação</strong> para ver os resultados.</div>
+      </div>
+    </div>
+    <div class="text-right text-xs">
+      <div class="muted mb-1">Última simulação executada</div>
+      <div id="runStamp" class="mono font-medium" style="color:var(--accent2);">— aguardando —</div>
+    </div>
+  </div>
+</header>
+
+<nav class="border-b rule sticky top-0 bg-[var(--paper)] z-30">
+  <div class="max-w-[1500px] mx-auto px-6 flex items-center gap-1 overflow-x-auto">
+    <button data-tab="premissas" class="tab px-4 py-3 text-sm font-medium flex items-center gap-2 tab-active"><span class="dot w-1 h-1 rounded-full bg-[var(--ink)]"></span>1 · Premissas</button>
+    <button data-tab="rodagem" class="tab px-4 py-3 text-sm font-medium flex items-center gap-2"><span class="dot w-1 h-1 rounded-full bg-[var(--ink)]"></span>2 · Projeção Mensal</button>
+    <button data-tab="dre" class="tab px-4 py-3 text-sm font-medium flex items-center gap-2"><span class="dot w-1 h-1 rounded-full bg-[var(--ink)]"></span>3 · Resultado (DRE)</button>
+    <button data-tab="fc" class="tab px-4 py-3 text-sm font-medium flex items-center gap-2"><span class="dot w-1 h-1 rounded-full bg-[var(--ink)]"></span>4 · Fluxo de Caixa</button>
+    <button data-tab="bp" class="tab px-4 py-3 text-sm font-medium flex items-center gap-2"><span class="dot w-1 h-1 rounded-full bg-[var(--ink)]"></span>5 · Balanço Patrimonial</button>
+    <button data-tab="liquidez" class="tab px-4 py-3 text-sm font-medium flex items-center gap-2"><span class="dot w-1 h-1 rounded-full bg-[var(--ink)]"></span>6 · Liquidez</button>
+    <button data-tab="graficos" class="tab px-4 py-3 text-sm font-medium flex items-center gap-2"><span class="dot w-1 h-1 rounded-full bg-[var(--ink)]"></span>7 · KPIs & Gráficos</button>
+    <button data-tab="cenarios" class="tab px-4 py-3 text-sm font-medium flex items-center gap-2"><span class="dot w-1 h-1 rounded-full bg-[var(--ink)]"></span>8 · Análise de Cenários</button>
+    <button data-tab="relatorio" class="tab px-4 py-3 text-sm font-medium flex items-center gap-2"><span class="dot w-1 h-1 rounded-full bg-[var(--ink)]"></span>9 · Relatório PDF</button>
+    <div class="flex-1"></div>
+    <button id="btnRun" class="btn btn-primary my-2">▶ Rodar Simulação</button>
+    <button id="btnExport" class="btn btn-ghost my-2 ml-2" title="Baixar análise como arquivo .json">↓ Salvar Análise</button>
+    <button id="btnImport" class="btn btn-ghost my-2 ml-1" title="Carregar análise salva anteriormente">↑ Carregar Análise</button>
+    <input type="file" id="fileImport" accept=".json,.fidc" style="display:none"/>
+    <button id="btnCsv" class="btn btn-ghost my-2 ml-1" title="Exportar projeção mensal como planilha">↓ Exportar CSV</button>
+  </div>
+</nav>
+
+<main class="max-w-[1500px] mx-auto px-6 py-8">
+
+<!-- ============ PREMISSAS ============ -->
+<section id="tab-premissas">
+  <div class="mb-6 pb-4 border-b rule">
+    <div class="text-[10px] uppercase tracking-[0.2em] muted mb-1">Passo 1 de 1 — Preencha os campos abaixo e clique em "Rodar Simulação"</div>
+    <h2 class="serif text-2xl font-semibold">Configuração das Premissas do Fundo</h2>
+    <p class="text-sm muted mt-1" style="max-width:700px;">Defina os parâmetros estruturais, de originação, de custos e de mercado. Após preencher, clique em <strong style="color:var(--ink)">Rodar Simulação</strong> para gerar as projeções financeiras nas demais abas.</p>
+  </div>
+
+  <div class="grid grid-cols-12 gap-5">
+
+    <div class="card p-5 col-span-12">
+      <h3 class="serif text-lg font-semibold mb-1">Identificação e Configurações Gerais</h3><p class="text-[11px] muted mb-4">Informações básicas do fundo, prazo de análise e estrutura de liquidez.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <label class="field col-span-2"><span>Nome do fundo</span><input type="text" id="nomeFundo" value="FIDC Exemplo I"/></label>
+        <label class="field"><span>Gestor</span><input type="text" id="gestor" value=""/></label>
+        <label class="field"><span>Administrador</span><input type="text" id="administrador" value=""/></label>
+        <label class="field"><span>Horizonte (meses)</span><input type="number" id="prazoMeses" value="36" min="1" max="240"/></label>
+        <label class="field"><span>Reserva mínima caixa (% PL)</span><input type="number" id="reservaMinima" value="5" step="0.1"/></label>
+        <label class="field"><span>Tipo do fundo</span>
+          <select id="tipoFundo"><option value="fechado">Fechado</option><option value="aberto" selected>Aberto</option></select>
+        </label>
+        <label class="field"><span>Liquidez resgate (dias)</span><input type="number" id="liquidezDias" value="30" step="1"/></label>
+      </div>
+    </div>
+
+    <div class="card p-5 col-span-12">
+      <h3 class="serif text-lg font-semibold mb-1">Captação Inicial — Alocação por Classe de Cota</h3><p class="text-[11px] muted mb-4">Defina o capital subscrito no primeiro mês para cada classe (Sênior, Mezanino e Subordinada).</p>
+      <div class="grid grid-cols-3 gap-4">
+        <label class="field"><span>Sênior (R$)</span><input type="number" id="capSenior" value="70000000" step="100000"/></label>
+        <label class="field"><span>Mezanino (R$)</span><input type="number" id="capMez" value="15000000" step="100000"/></label>
+        <label class="field"><span>Subordinada (R$)</span><input type="number" id="capSub" value="15000000" step="100000"/></label>
+      </div>
+      <p class="text-[11px] muted mt-3">Razão de subordinação inicial (Mez+Sub / Total): <span id="relSub" class="mono font-semibold" style="color:var(--accent2)">—</span> <span class="muted">· Meta regulatória mínima geralmente entre 20–30%</span></p>
+    </div>
+
+    <div class="col-span-12 section-divider"><span class="section-title">🏦 Captação &amp; Estrutura do Passivo — entradas de capital e amortizações</span></div>
+
+    <div class="card p-5 col-span-12">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="serif text-lg font-semibold">Fluxos programados de captação</h3>
+          <p class="text-[11px] muted">Eventos por janela de meses.</p>
+        </div>
+        <button class="btn btn-ghost btn-small" onclick="addEvento('captacao')">+ Adicionar</button>
+      </div>
+      <div class="grid grid-cols-6 gap-2 mb-2 text-[10px] uppercase tracking-wider muted font-semibold px-2">
+        <div>Classe</div><div>Descrição</div><div>Valor mensal (R$)</div><div>Mês início</div><div>Duração</div><div></div>
+      </div>
+      <div id="captacaoList"></div>
+      <details class="help">
+        <summary>Como funciona a captação programada?</summary>
+        <div class="help-box">
+          <strong>Mecânica:</strong> Cada evento define uma entrada de capital na classe escolhida (sênior ou mezanino) durante uma janela de meses. O valor mensal é fixo dentro da janela.
+          <ul>
+            <li><strong>Classe:</strong> Sênior ou Mezanino — a subordinada não recebe captação programada (use recomposição para isso).</li>
+            <li><strong>Mês início / Duração:</strong> O capital entra do mês início até (início + duração − 1). Ex.: início 2, duração 6 → meses 2 a 7.</li>
+            <li><strong>Impacto:</strong> Aumenta o PL, dilui a razão de subordinação (mez+sub cai como % do PL), e amplia o caixa disponível para originação.</li>
+            <li><strong>Múltiplos eventos:</strong> Você pode combinar vários eventos com janelas sobrepostas — os valores se somam no mês.</li>
+          </ul>
+          <strong>Quando usar:</strong> Modelar ramp-up de captação, tranches de capital institucional, ou compromissos de captação com datas definidas.
+        </div>
+      </details>
+    </div>
+
+    <div class="card p-5 col-span-12 md:col-span-6">
+      <h3 class="serif text-lg font-semibold mb-4">Captação sob demanda (ramp-up)</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <label class="field"><span>Habilitar</span><select id="rampOn"><option value="0">Não</option><option value="1">Sim</option></select></label>
+        <label class="field"><span>Classe alvo</span><select id="rampClasse"><option value="senior">Sênior</option><option value="mez">Mezanino</option></select></label>
+        <label class="field"><span>Teto acumulado (R$)</span><input type="number" id="rampTeto" value="30000000" step="1000000"/></label>
+        <label class="field"><span>Teto por mês (R$)</span><input type="number" id="rampTetoMes" value="10000000" step="500000"/></label>
+      </div>
+      <details class="help">
+        <summary>Como funciona a captação sob demanda?</summary>
+        <div class="help-box">
+          <strong>Mecânica:</strong> No fim de cada mês, o sistema verifica se a originação foi limitada por falta de caixa. Se sim, capta automaticamente o déficit na classe escolhida.
+          <ul>
+            <li><strong>Gatilho:</strong> Originação desejada > caixa disponível (acima da reserva mínima). O déficit = diferença.</li>
+            <li><strong>Limites:</strong> A captação é limitada pelo menor entre: o déficit, o teto mensal e o teto acumulado restante.</li>
+            <li><strong>Impacto:</strong> O capital entra no fim do mês e fica disponível para originação no mês seguinte. Dilui a subordinação.</li>
+          </ul>
+          <strong>Quando usar:</strong> Simular fundos em fase de ramp-up onde o gestor capta conforme a demanda de originação, tipicamente nos primeiros 6–12 meses.
+        </div>
+      </details>
+    </div>
+
+    <div class="card p-5 col-span-12 md:col-span-6">
+      <h3 class="serif text-lg font-semibold mb-4">Recomposição de subordinação</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <label class="field"><span>Habilitar</span><select id="recompOn"><option value="0">Não</option><option value="1" selected>Sim</option></select></label>
+        <label class="field"><span>Razão monitorada</span>
+          <select id="recompRazao">
+            <option value="mez_sub" selected>Mez+Sub / PL (subordinação total)</option>
+            <option value="sub_only">Sub / PL (subordinação pura)</option>
+          </select>
+        </label>
+        <label class="field"><span>Recomposição via</span>
+          <select id="recompVia">
+            <option value="sub" selected>Somente aporte na sub</option>
+            <option value="mez_sub">Aporte proporcional mez + sub</option>
+          </select>
+        </label>
+        <label class="field"><span>Gatilho razão min (%)</span><input type="number" id="recompGatilho" value="25" step="0.5"/></label>
+        <label class="field"><span>Target razão (%)</span><input type="number" id="recompTarget" value="30" step="0.5"/></label>
+        <label class="field"><span>Teto por mês (R$)</span><input type="number" id="recompTetoMes" value="5000000" step="500000"/></label>
+        <label class="field col-span-2"><span>Teto acumulado (R$)</span><input type="number" id="recompTetoAcum" value="30000000" step="1000000"/></label>
+      </div>
+      <details class="help">
+        <summary>Como funciona a recomposição de subordinação?</summary>
+        <div class="help-box">
+          <strong>Mecânica:</strong> Após a apuração do resultado mensal, o sistema calcula a razão de subordinação escolhida. Se caiu abaixo do gatilho, calcula o aporte necessário para voltar ao target.
+          <ul>
+            <li><strong>Razão monitorada:</strong> Pode monitorar (mez+sub)/PL (subordinação total, que protege a sênior) ou sub/PL (subordinação pura, que protege sênior e mez).</li>
+            <li><strong>Recomposição via sub:</strong> Todo o aporte entra como cotas subordinadas. O investidor da sub absorve a obrigação.</li>
+            <li><strong>Recomposição via mez+sub:</strong> O aporte é dividido proporcionalmente entre mez e sub pelos saldos atuais. Ambos os investidores compartilham a obrigação.</li>
+            <li><strong>Fórmula:</strong> Aporte = (target × PL − 100 × razão_atual_R$) / (100 − target).</li>
+            <li><strong>Limites:</strong> Respeitam teto mensal e acumulado — se o aporte necessário excede os tetos, a recomposição é parcial.</li>
+            <li><strong>Impacto:</strong> Entra como subscrição de cotas. Impacta a TIR do investidor que recebe a subscrição.</li>
+          </ul>
+          <strong>Quando usar:</strong> Modelar a obrigação contratual de recompor capital quando perdas corroem a subordinação. Comum em FIDCs com subordinação mínima regulamentar.
+        </div>
+      </details>
+    </div>
+
+    <div class="card p-5 col-span-12">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="serif text-lg font-semibold">Amortizações programadas</h3>
+          <p class="text-[11px] muted">Pagamentos programados de cotas.</p>
+        </div>
+        <button class="btn btn-ghost btn-small" onclick="addEvento('amort')">+ Adicionar</button>
+      </div>
+      <div class="grid grid-cols-6 gap-2 mb-2 text-[10px] uppercase tracking-wider muted font-semibold px-2">
+        <div>Classe</div><div>Descrição</div><div>Valor mensal (R$)</div><div>Mês início</div><div>Duração</div><div></div>
+      </div>
+      <div id="amortList"></div>
+      <details class="help">
+        <summary>Como funciona a amortização programada?</summary>
+        <div class="help-box">
+          <strong>Mecânica:</strong> Eventos de amortização retiram capital de uma classe de cotas e devolvem ao cotista. Funcionam como "pay-down" programado.
+          <ul>
+            <li><strong>Classe:</strong> Sênior, Mezanino ou Subordinada — cada classe pode ter seus próprios eventos.</li>
+            <li><strong>Restrição de caixa:</strong> A amortização é limitada pelo caixa disponível acima da reserva mínima. Se não há caixa suficiente, o valor é reduzido proporcionalmente.</li>
+            <li><strong>Restrição de saldo:</strong> Nunca amortiza mais do que o saldo da classe (não pode ficar negativa).</li>
+            <li><strong>Impacto:</strong> Reduz o PL, altera a razão de subordinação, e entra como retorno de capital no cálculo de TIR do investidor.</li>
+          </ul>
+          <strong>Quando usar:</strong> Modelar o pay-down da sênior nos últimos meses do fundo, amortizações semestrais programadas, ou a devolução de capital ao fim do prazo.
+        </div>
+      </details>
+    </div>
+
+    <div class="card p-5 col-span-12 md:col-span-6">
+      <h3 class="serif text-lg font-semibold mb-1">Waterfall — Distribuição de Caixa Excedente</h3><p class="text-[11px] muted mb-4">Distribui automaticamente o caixa acima do colchão mínimo, seguindo a ordem de prioridade das classes.</p>
+      <div class="grid grid-cols-2 gap-4">
+        <label class="field"><span>Habilitar</span><select id="wfOn"><option value="0" selected>Não</option><option value="1">Sim</option></select></label>
+        <label class="field"><span>Colchão (% do PL)</span><input type="number" id="wfColchao" value="15" step="0.5"/></label>
+        <label class="field col-span-2"><span>Ordem</span>
+          <select id="wfOrdem">
+            <option value="sr_mz_sb" selected>Sênior → Mez → Sub</option>
+            <option value="sr_mz">Sênior → Mez</option>
+            <option value="sr">Só Sênior</option>
+          </select>
+        </label>
+      </div>
+      <details class="help">
+        <summary>Como funciona o waterfall?</summary>
+        <div class="help-box">
+          <strong>Mecânica:</strong> No fim do mês, se o caixa excede um teto (reserva mínima + colchão % do PL), o excedente amortiza cotas em cascata na ordem definida.
+          <ul>
+            <li><strong>Teto de caixa:</strong> Reserva mínima (% PL) + Colchão (% PL). Caixa acima disso é considerado excedente.</li>
+            <li><strong>Ordem:</strong> O excedente vai primeiro para a classe com maior prioridade (sênior), depois mez, depois sub. Cada classe é amortizada até zerar antes de passar à próxima.</li>
+            <li><strong>Impacto:</strong> Reduz o PL automaticamente, devolve capital aos investidores mais seniores primeiro, e evita que o fundo acumule caixa ocioso.</li>
+          </ul>
+          <strong>Quando usar:</strong> Fundos em fase de wind-down ou que devem devolver caixa excedente automaticamente. Simula a cascata de pagamentos típica de FIDCs.
+        </div>
+      </details>
+    </div>
+
+    <div class="card p-5 col-span-12 md:col-span-6">
+      <h3 class="serif text-lg font-semibold mb-1">Desamortização da Cota Subordinada</h3><p class="text-[11px] muted mb-4">Quando a subordinação cresce além do limite, devolve capital automaticamente ao cotista subordinado.</p>
+      <div class="grid grid-cols-2 gap-4">
+        <label class="field"><span>Habilitar</span><select id="desubOn"><option value="0">Não</option><option value="1" selected>Sim</option></select></label>
+        <label class="field"><span>Gatilho razão max (%)</span><input type="number" id="desubGatilho" value="35" step="0.5"/></label>
+        <label class="field"><span>Target razão (%)</span><input type="number" id="desubTarget" value="30" step="0.5"/></label>
+        <label class="field"><span>Teto por mês (R$)</span><input type="number" id="desubTetoMes" value="5000000" step="500000"/></label>
+      </div>
+      <details class="help">
+        <summary>Como funciona a desamortização da sub?</summary>
+        <div class="help-box">
+          <strong>Mecânica:</strong> É o espelho da recomposição. Quando a subordinada "engorda" (por lucros acumulados) e a razão de subordinação excede o teto, o sistema amortiza automaticamente cotas sub para trazer a razão de volta ao target.
+          <ul>
+            <li><strong>Fórmula:</strong> Amortização = (100 × saldo_sub − target × PL) / (100 − target).</li>
+            <li><strong>Gatilho vs Target:</strong> Gatilho 35%, target 30% — quando a razão sobe acima de 35%, amortiza até 30%.</li>
+            <li><strong>Restrições:</strong> Limitada pelo teto mensal, pelo saldo da sub e pelo caixa disponível (não amortiza abaixo da reserva).</li>
+            <li><strong>Impacto:</strong> O investidor da sub recebe capital de volta, melhorando sua TIR. A razão volta a um nível sustentável.</li>
+          </ul>
+          <strong>Quando usar:</strong> Simular a obrigação ou política de não permitir que a subordinação cresça indefinidamente por retenção de lucros. Comum quando há target de subordinação definido em regulamento.
+        </div>
+      </details>
+    </div>
+
+    <div class="card p-5 col-span-12">
+      <h3 class="serif text-lg font-semibold mb-1">Curvas de Mercado: CDI &amp; IPCA</h3><p class="text-[11px] muted mb-4">Taxas projetadas por ano, usadas para precificar ativos e remuneração das cotas indexadas.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <label class="field"><span>CDI ano 1 (% a.a.)</span><input type="number" id="cdiAno1" value="11.75" step="0.25"/></label>
+        <label class="field"><span>CDI ano 2 (% a.a.)</span><input type="number" id="cdiAno2" value="10.50" step="0.25"/></label>
+        <label class="field"><span>CDI ano 3 (% a.a.)</span><input type="number" id="cdiAno3" value="10.00" step="0.25"/></label>
+        <label class="field"><span>CDI terminal (% a.a.)</span><input type="number" id="cdiTerminal" value="10.00" step="0.25"/></label>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <label class="field"><span>IPCA ano 1 (% a.a.)</span><input type="number" id="ipcaAno1" value="4.50" step="0.25"/></label>
+        <label class="field"><span>IPCA ano 2 (% a.a.)</span><input type="number" id="ipcaAno2" value="4.00" step="0.25"/></label>
+        <label class="field"><span>IPCA ano 3 (% a.a.)</span><input type="number" id="ipcaAno3" value="3.50" step="0.25"/></label>
+        <label class="field"><span>IPCA terminal (% a.a.)</span><input type="number" id="ipcaTerminal" value="3.50" step="0.25"/></label>
+      </div>
+    </div>
+
+    <div class="card p-5 col-span-12">
+      <h3 class="serif text-lg font-semibold mb-1">Remuneração-Alvo das Cotas &amp; Rendimento do Caixa</h3><p class="text-[11px] muted mb-4">Spread sobre CDI para cada classe de cota. A cota subordinada recebe o resíduo após pagamento das demais.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <label class="field"><span>Spread sênior (% a.a.)</span><input type="number" id="spreadSenior" value="3" step="0.25"/></label>
+        <label class="field"><span>Spread mez (% a.a.)</span><input type="number" id="spreadMez" value="6" step="0.25"/></label>
+        <label class="field"><span>Caixa (% do CDI)</span><input type="number" id="caixaCdiPct" value="100" step="1"/></label>
+        <div class="text-[11px] muted self-end pb-2">Sub absorve resíduo.</div>
+      </div>
+    </div>
+
+    <div class="col-span-12 section-divider"><span class="section-title">📋 Carteira &amp; Originação — ativos e política de investimento</span></div>
+
+    <div class="card p-5 col-span-12 md:col-span-6">
+      <h3 class="serif text-lg font-semibold mb-4">Originação da carteira</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <label class="field"><span>Originação alvo mensal (R$)</span><input type="number" id="originacaoMensal" value="25000000" step="500000"/></label>
+        <label class="field"><span>Teto máximo de carteira (R$)</span><input type="number" id="tetoCarteira" value="0" step="1000000"/></label>
+        <label class="field"><span>Originação no mês 1 (R$)</span><input type="number" id="origMes1" value="0" step="1000000"/></label>
+        <label class="field"><span>Ramp-up até alvo (meses)</span><input type="number" id="origRampMeses" value="0" step="1"/></label>
+      </div>
+      <details class="help">
+        <summary>Como funciona a originação?</summary>
+        <div class="help-box">
+          <strong>Mecânica:</strong> A cada mês, o fundo tenta originar o valor definido como alvo, mas a originação efetiva é limitada por três fatores:
+          <ul>
+            <li><strong>Caixa disponível:</strong> Só origina com o caixa acima da reserva mínima (% PL).</li>
+            <li><strong>Teto de carteira:</strong> Se definido (> 0), a originação é limitada para que a carteira total não exceda o teto. Útil para modelar limites regulatórios ou de mandato.</li>
+            <li><strong>Ramp-up:</strong> Se "Ramp-up meses" > 0, a originação nos primeiros meses cresce linearmente de "Originação mês 1" até o alvo. Ex.: mês 1 = R$ 5M, alvo = R$ 25M, ramp = 5 → meses 1-5 originam 5, 10, 15, 20, 25 M. Se mês 1 = 0, começa do zero.</li>
+          </ul>
+          A originação é distribuída entre os ativos da carteira pelos seus pesos (%).
+        </div>
+      </details>
+    </div>
+
+    <div class="card p-5 col-span-12 md:col-span-6">
+      <h3 class="serif text-lg font-semibold mb-1">Taxa de Performance do Gestor</h3><p class="text-[11px] muted mb-4">Percentual cobrado sobre o rendimento acima do benchmark definido.</p>
+      <div class="grid grid-cols-2 gap-4">
+        <label class="field"><span>Habilitar</span><select id="perfOn"><option value="0">Não</option><option value="1" selected>Sim</option></select></label>
+        <label class="field"><span>Percentual (%)</span><input type="number" id="perfPct" value="20" step="1"/></label>
+        <label class="field"><span>Tipo de benchmark</span>
+          <select id="perfBenchTipo">
+            <option value="pct_cdi" selected>% do CDI</option>
+            <option value="cdi_plus">CDI + spread (% a.a.)</option>
+          </select>
+        </label>
+        <label class="field"><span>Valor do benchmark</span><input type="number" id="perfBench" value="100" step="0.5"/></label>
+        <label class="field"><span>Aplicar sobre</span>
+          <select id="perfBase"><option value="excedente_pl" selected>Excedente do PL</option><option value="excedente_sub">Excedente da sub</option></select>
+        </label>
+      </div>
+      <details class="help">
+        <summary>Como funciona a performance?</summary>
+        <div class="help-box">
+          <strong>Mecânica:</strong> A cada mês, o sistema compara o resultado do fundo contra o benchmark e cobra um percentual sobre o excedente.
+          <ul>
+            <li><strong>% do CDI:</strong> Benchmark = PL (ou sub) × CDI mensal × (valor/100). Ex.: 100% do CDI = o benchmark é o CDI cheio.</li>
+            <li><strong>CDI+ spread:</strong> Benchmark = PL (ou sub) × taxa mensal equivalente a (CDI + valor % a.a.). Ex.: CDI+3% a.a. = o benchmark é CDI mais 3 pontos anuais.</li>
+            <li><strong>Aplicar sobre:</strong> "Excedente do PL" compara contra todo o PL; "Excedente da sub" só cobra sobre o que sobra para a sub após pagar sênior e mez.</li>
+          </ul>
+          <strong>Impacto:</strong> A performance é debitada do caixa do fundo e aparece como despesa na DRE. Reduz o resultado distribuível à subordinada.
+        </div>
+      </details>
+    </div>
+
+    <div class="card p-5 col-span-12">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="serif text-lg font-semibold">Ativos da carteira</h3>
+        <div class="flex items-center gap-2">
+          <span id="ativoPesoStatus" class="pill ok">Soma 100%</span>
+          <button class="btn btn-ghost btn-small" onclick="addAtivo()">+ Adicionar</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-8 gap-2 mb-2 text-[10px] uppercase tracking-wider muted font-semibold px-2">
+        <div>Nome</div><div>Tipo</div><div>Taxa</div><div>Peso (%)</div><div>Prazo (m)</div><div>PDD (% a.m.)</div><div>Modo PDD</div><div></div>
+      </div>
+      <div id="ativoList"></div>
+      <details class="help">
+        <summary>Ativos: tipos de remuneração e modelos de PDD</summary>
+        <div class="help-box">
+          <strong>Tipos de remuneração:</strong>
+          <ul>
+            <li><strong>Pré-fixado:</strong> Taxa expressa em % a.m. — ex.: 2,5% a.m. Não varia com CDI/IPCA.</li>
+            <li><strong>CDI+:</strong> Taxa = CDI vigente + spread em % a.a. Ex.: CDI+6% a.a. → se CDI = 11%, taxa efetiva = 17% a.a. convertida em mensal.</li>
+            <li><strong>IPCA+:</strong> Idem, mas usa a curva de IPCA. Ex.: IPCA+8% a.a.</li>
+          </ul>
+          <strong>Modelos de PDD:</strong> Cada ativo pode operar em um de dois modos (definido na tela):
+          <ul>
+            <li><strong>% sobre carteira (padrão):</strong> A cada mês, perda = saldo da carteira daquele ativo × PDD%. Modela inadimplência como evento que erode o estoque.</li>
+            <li><strong>% sobre fluxo recebido:</strong> A cada mês, perda = (amortização + juros recebidos daquele ativo) × PDD%. Modela perda como % do dinheiro que deveria entrar. Mais conservador em carteiras de prazo longo.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+
+    <div class="col-span-12 section-divider"><span class="section-title">💸 Custos &amp; Despesas — taxas e encargos do fundo</span></div>
+
+    <div class="card p-5 col-span-12">
+      <h3 class="serif text-lg font-semibold mb-1">Taxas &amp; Custos Operacionais</h3><p class="text-[11px] muted mb-4">Taxas anuais sobre o PL e custos fixos mensais cobrados do fundo.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <label class="field"><span>Adm (% a.a.)</span><input type="number" id="taxaAdmAA" value="0.5" step="0.05"/></label>
+        <label class="field"><span>Mín adm (R$/mês)</span><input type="number" id="minAdmMes" value="10000" step="500"/></label>
+        <label class="field"><span>Gestão (% a.a.)</span><input type="number" id="taxaGestaoAA" value="0.8" step="0.05"/></label>
+        <label class="field"><span>Mín gestão (R$/mês)</span><input type="number" id="minGestaoMes" value="15000" step="500"/></label>
+        <label class="field"><span>Custódia (% a.a.)</span><input type="number" id="taxaCustodiaAA" value="0.15" step="0.05"/></label>
+        <label class="field"><span>Auditoria (R$/mês)</span><input type="number" id="auditoriaMensal" value="8000" step="500"/></label>
+        <label class="field"><span>Outras (R$/mês)</span><input type="number" id="outrasDespMes" value="5000" step="500"/></label>
+        <label class="field"><span>Estruturação (R$)</span><input type="number" id="despEstruturacao" value="150000" step="10000"/></label>
+      </div>
+    </div>
+
+    <div class="card p-5 col-span-12">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="serif text-lg font-semibold">Despesas customizadas</h3>
+        <button class="btn btn-ghost btn-small" onclick="addDespCustom()">+ Adicionar</button>
+      </div>
+      <div id="despCustomList"></div>
+    </div>
+
+  </div>
+
+  <div class="mt-6 flex items-center gap-3 p-4 rounded-lg" style="background:var(--chip);border:1px solid var(--rule);">
+    <button class="btn btn-primary" onclick="runSimulation()" style="font-size:14px;padding:10px 24px;">▶ Rodar Simulação</button>
+    <div class="text-sm muted">Execute a simulação para ver a projeção financeira completa nas abas ao lado.</div>
+    <div class="flex-1"></div>
+    <button class="btn btn-ghost" onclick="resetDefaults()">↺ Restaurar Padrões</button>
+  </div>
+</section>
+
+<!-- Outras abas -->
+<section id="tab-rodagem" class="hidden-tab"><div class="mb-4"><h2 class="serif text-2xl font-semibold">Rodagem mensal</h2></div><div class="card scroll-x"><table class="fin" id="tblRodagem"></table></div></section>
+<section id="tab-dre" class="hidden-tab"><div class="mb-4"><h2 class="serif text-2xl font-semibold">DRE mensal</h2></div><div class="card scroll-x"><table class="fin" id="tblDRE"></table></div></section>
+<section id="tab-fc" class="hidden-tab"><div class="mb-4"><h2 class="serif text-2xl font-semibold">Fluxo de caixa mensal</h2></div><div class="card scroll-x"><table class="fin" id="tblFC"></table></div></section>
+<section id="tab-bp" class="hidden-tab"><div class="mb-4"><h2 class="serif text-2xl font-semibold">Balanço patrimonial</h2></div><div class="card scroll-x"><table class="fin" id="tblBP"></table></div></section>
+
+<section id="tab-liquidez" class="hidden-tab">
+  <div class="mb-4">
+    <h2 class="serif text-2xl font-semibold">Risco de liquidez</h2>
+    <p class="text-sm muted mt-1" id="liquidezSubtitle">—</p>
+  </div>
+  <div class="card p-5 mb-6">
+    <details class="help">
+      <summary>Metodologia do risco de liquidez</summary>
+      <div class="help-box">
+        <strong>Objetivo:</strong> Avaliar se o fundo teria caixa suficiente para honrar resgates na janela D+X em cenário de stress (resgate total da classe sênior).
+        <ul>
+          <li><strong>Fundos abertos:</strong> A métrica principal é a <strong>cobertura sênior</strong>, calculada como:
+            <br><em>Cobertura = (Caixa atual + Amortizações esperadas na janela D+X) / PL da sênior</em>
+            <br>Onde as amortizações esperadas na janela usam como proxy: <em>(Carteira / Duration média da carteira) × (D+X / 30)</em>.</li>
+          <li><strong>Interpretação:</strong>
+            <br>— Cobertura ≥ 120%: <span class="pill ok" style="font-size:9px">OK</span> Liquidez folgada.
+            <br>— 100% ≤ Cobertura &lt; 120%: <span class="pill warn" style="font-size:9px">Atenção</span> Margem apertada.
+            <br>— Cobertura &lt; 100%: <span class="pill bad" style="font-size:9px">Stress</span> O fundo não cobriria resgate total da sênior na janela.</li>
+          <li><strong>Duration média da carteira:</strong> Média ponderada dos prazos dos ativos pelo saldo de cada bucket. Quanto menor, mais rápido o ativo vira caixa.</li>
+          <li><strong>Fundos fechados:</strong> Sem direito de resgate, o sistema mostra apenas a duration da carteira vs horizonte restante — relevante para o gestor monitorar o "casamento" de prazos.</li>
+        </ul>
+        <strong>Limitações do modelo:</strong> A proxy de amortização assume geração linear de caixa pelo prazo médio. Em carteiras com concentração de vencimentos ou vintages escalonados, a liquidez real pode diferir. Para uma análise mais granular, modelar o run-off da carteira por safra.
+      </div>
+    </details>
+  </div>
+  <div id="liquidezKpis" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
+  <div class="card p-5 mb-6"><h3 class="serif text-base font-semibold mb-3">Liquidez ao longo do tempo</h3><canvas id="chartLiquidez" height="140"></canvas></div>
+  <div class="card scroll-x"><table class="fin" id="tblLiquidez"></table></div>
+</section>
+
+<section id="tab-graficos" class="hidden-tab">
+  <div class="mb-6"><h2 class="serif text-2xl font-semibold">Indicadores &amp; gráficos</h2></div>
+  <div id="kpis" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+    <div class="card p-5"><h3 class="serif text-base font-semibold mb-3">PL por classe</h3><canvas id="chartPL" height="180"></canvas></div>
+    <div class="card p-5"><h3 class="serif text-base font-semibold mb-3">Composição do ativo</h3><canvas id="chartAtivo" height="180"></canvas></div>
+    <div class="card p-5"><h3 class="serif text-base font-semibold mb-3">Resultado mensal</h3><canvas id="chartResult" height="180"></canvas></div>
+    <div class="card p-5"><h3 class="serif text-base font-semibold mb-3">Razão de subordinação</h3><canvas id="chartSub" height="180"></canvas></div>
+    <div class="card p-5 md:col-span-2"><h3 class="serif text-base font-semibold mb-3">Rentabilidade acumulada vs CDI</h3><canvas id="chartRent" height="140"></canvas></div>
+  </div>
+  <div class="card p-5 mb-5">
+    <h3 class="serif text-base font-semibold mb-3">TIR dos investidores</h3>
+    <div class="scroll-x"><table class="fin" id="tblTIR"></table></div>
+  </div>
+  <div class="card p-5">
+    <h3 class="serif text-base font-semibold mb-3">Rentabilidade anual por classe (cota)</h3>
+    <div class="scroll-x"><table class="fin" id="tblRentAnual"></table></div>
+  </div>
+</section>
+
+<!-- ============ CENÁRIOS ============ -->
+<section id="tab-cenarios" class="hidden-tab">
+  <div class="mb-6 flex items-end justify-between">
+    <div>
+      <div class="text-[10px] uppercase tracking-[0.2em] muted mb-1">Análise comparativa</div>
+      <h2 class="serif text-2xl font-semibold">Cenários &amp; stress test</h2>
+      <p class="text-sm muted mt-1 max-w-2xl">Crie cenários como deltas sobre o caso base e compare resultados lado a lado. O caso base é sempre a simulação atual das premissas.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="btn btn-ghost btn-small" onclick="addCenario()">+ Novo cenário</button>
+      <button class="btn btn-ghost btn-small" onclick="loadCenariosPreset()">↻ Presets</button>
+      <button class="btn btn-primary btn-small" onclick="runCenarios()">Rodar todos</button>
+    </div>
+  </div>
+
+  <div class="card p-5 mb-6">
+    <details class="help" open>
+      <summary>Metodologia do stress test</summary>
+      <div class="help-box">
+        <strong>Como funciona:</strong> Cada cenário é um conjunto de ajustes (deltas) aplicados sobre as premissas do caso base. O sistema clona as premissas, aplica os ajustes e roda a simulação completa de forma independente. Os resultados são comparados lado a lado em relação ao base.
+        <ul>
+          <li><strong>PDD (multiplicador):</strong> Multiplica a taxa de PDD de todos os ativos. Ex.: 2.0 = dobra as perdas. Simula deterioração generalizada da carteira.</li>
+          <li><strong>Taxa DC (delta p.p.):</strong> Adiciona/subtrai pontos percentuais à taxa de todos os ativos. Ex.: −1.5 reduz receita. Simula compressão de spread.</li>
+          <li><strong>Originação (multiplicador):</strong> Multiplica a originação alvo. Ex.: 0.5 = metade. Simula dificuldade de originar novos ativos.</li>
+          <li><strong>CDI (delta p.p.):</strong> Desloca a curva inteira de CDI (todos os anos). Ex.: +3 = choque de juros para cima. Afeta custo da sênior/mez e rendimento do caixa.</li>
+          <li><strong>IPCA (delta p.p.):</strong> Desloca a curva de IPCA. Relevante para ativos IPCA+.</li>
+          <li><strong>Desligar performance:</strong> Remove a taxa de performance do cenário. Isola o efeito da performance sobre o resultado.</li>
+          <li><strong>Reserva mínima (absoluto):</strong> Substitui o % de reserva. Ex.: 10 = exige 10% do PL em caixa.</li>
+          <li><strong>Prazo DC (multiplicador):</strong> Alonga ou encurta os prazos dos ativos. Ex.: 1.5 = prazo 50% maior. Simula desaceleração dos recebimentos.</li>
+        </ul>
+        <strong>Comparação:</strong> A tabela mostra o valor absoluto de cada métrica e, nos cenários, o delta em relação ao base (verde = melhora, vermelho = piora). Os gráficos comparam rentabilidade acumulada da sênior e da subordinada em todos os cenários.
+        <br><br>
+        <strong>Dica:</strong> Use os presets para começar e depois crie cenários específicos ao seu caso. Cada cenário pode ter múltiplos ajustes combinados para simular situações complexas (ex.: "PDD 2x + originação 50% + CDI +3" = stress severo combinado).
+      </div>
+    </details>
+  </div>
+
+  <div id="cenarioList" class="mb-6"></div>
+
+  <div id="cenarioResultados"></div>
+</section>
+
+<!-- ============ RELATÓRIO PDF ============ -->
+<section id="tab-relatorio" class="hidden-tab">
+  <div id="printControls" class="mb-4 flex items-center justify-between max-w-[210mm] mx-auto">
+    <div>
+      <h2 class="serif text-2xl font-semibold">Relatório para investidores</h2>
+      <p class="text-sm muted mt-1">Layout em A4. Clique em "Gerar PDF" e escolha <em>Salvar como PDF</em> no diálogo.</p>
+    </div>
+    <button class="btn btn-primary" onclick="setTimeout(()=>window.print(),300)">Gerar PDF ↓</button>
+  </div>
+  <div id="reportContent"></div>
+</section>
+
+</main>
+
+<footer class="max-w-[1500px] mx-auto px-6 py-8 text-xs muted border-t rule mt-10">
+  <div>Protótipo v0.6 · cenários · stress test · relatório PDF · import/export · PDD dual · originação ramp</div>
+</footer>
+
+<script>
+/* ============================================================
+   FIDC v0.5
+   ============================================================ */
+
+const FMT = new Intl.NumberFormat('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+const fmt = v => (v===null||v===undefined||isNaN(v))?'—':FMT.format(Math.round(v));
+const fmtSign = v => {
+  if (v===null||v===undefined||isNaN(v)) return '—';
+  if (Math.abs(v) < 0.5) return '—';
+  const s = FMT.format(Math.round(Math.abs(v)));
+  return v<0 ? `(${s})` : s;
+};
+const fmtPct = (v, d=2) => v===null||isNaN(v) ? '—' : (v*100).toFixed(d)+'%';
+const escapeHtml = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---- Estado ---- */
+let ativoState = [], ativoSeq = 0;
+let despCustomState = [], despCustomSeq = 0;
+let captacaoState = [], captacaoSeq = 0;
+let amortState = [], amortSeq = 0;
+let cenarioState = [], cenarioSeq = 0;
+
+const TIPOS_ATIVO = [
+  {v:'pre',  l:'Pré-fixado (% a.m.)'},
+  {v:'cdi',  l:'CDI+ (% a.a.)'},
+  {v:'ipca', l:'IPCA+ (% a.a.)'},
+];
+const TIPOS_DESP = [
+  {v:'fixo_mensal',     l:'R$ fixo mensal'},
+  {v:'pct_pl_aa',       l:'% a.a. sobre PL'},
+  {v:'pct_carteira_aa', l:'% a.a. sobre carteira'},
+  {v:'pct_originacao',  l:'% sobre originação'},
+  {v:'unico_mes1',      l:'R$ único mês 1'},
+];
+const CLASSES_EVENTO = [
+  {v:'senior', l:'Sênior'},
+  {v:'mez',    l:'Mezanino'},
+  {v:'sub',    l:'Subordinada'},
+];
+
+/* Variáveis disponíveis para stress */
+const VARS_STRESS = [
+  {v:'pdd_mult',     l:'PDD (multiplicador)',        hint:'ex.: 2 = dobra a PDD de todos os ativos', default:2},
+  {v:'taxa_delta',   l:'Taxa DC (delta p.p.)',       hint:'ex.: -1.5 subtrai 1,5 p.p. de todos os ativos', default:-1.5},
+  {v:'orig_mult',    l:'Originação (multiplicador)', hint:'ex.: 0.5 = metade da originação', default:0.7},
+  {v:'cdi_delta',    l:'CDI (delta p.p.)',           hint:'ex.: +2 adiciona 2 p.p. a todos os anos', default:2},
+  {v:'ipca_delta',   l:'IPCA (delta p.p.)',          hint:'ex.: +1.5 adiciona 1,5 p.p. a todos os anos', default:1.5},
+  {v:'perf_off',     l:'Desligar performance',       hint:'0 = mantém, 1 = desliga', default:1},
+  {v:'reserva_abs',  l:'Reserva mínima (% absoluto)',hint:'substitui o % de reserva', default:10},
+  {v:'prazo_mult',   l:'Prazo DC (multiplicador)',   hint:'ex.: 1.5 estende os prazos', default:1.5},
+];
+
+/* ===================== CRUDs ===================== */
+function addAtivo(data){
+  const id = 'at_'+(++ativoSeq);
+  ativoState.push(Object.assign({id, nome:'Ativo '+ativoSeq, tipo:'pre', taxa:2.5, peso:100, prazo:6, pdd:0.8, pddMode:'carteira'}, data||{}));
+  renderAtivoList();
+}
+function removeAtivo(id){ ativoState = ativoState.filter(d=>d.id!==id); renderAtivoList(); }
+function updateAtivo(id, f, v){ const d = ativoState.find(x=>x.id===id); if (d) d[f]=v; if (f==='peso') updateAtivoPesoBadge(); }
+function updateAtivoPesoBadge(){
+  const soma = ativoState.reduce((s,d)=>s+(parseFloat(d.peso)||0),0);
+  const el = document.getElementById('ativoPesoStatus');
+  if (Math.abs(soma-100) < 0.01){ el.textContent='Soma 100%'; el.className='pill ok'; }
+  else { el.textContent='Soma '+soma.toFixed(1)+'%'; el.className='pill warn'; }
+}
+function renderAtivoList(){
+  const host = document.getElementById('ativoList');
+  if (!ativoState.length){ host.innerHTML='<p class="text-xs muted italic px-2">Nenhum ativo.</p>'; updateAtivoPesoBadge(); return; }
+  host.innerHTML = ativoState.map(d=>`
+    <div class="ativo-row">
+      <input type="text" value="${escapeHtml(d.nome)}" oninput="updateAtivo('${d.id}','nome',this.value)"/>
+      <select onchange="updateAtivo('${d.id}','tipo',this.value)">${TIPOS_ATIVO.map(t=>`<option value="${t.v}" ${t.v===d.tipo?'selected':''}>${t.l}</option>`).join('')}</select>
+      <input type="number" step="0.01" value="${d.taxa}" oninput="updateAtivo('${d.id}','taxa',parseFloat(this.value)||0)"/>
+      <input type="number" step="0.1" value="${d.peso}" oninput="updateAtivo('${d.id}','peso',parseFloat(this.value)||0)"/>
+      <input type="number" step="1" value="${d.prazo}" oninput="updateAtivo('${d.id}','prazo',parseFloat(this.value)||1)"/>
+      <input type="number" step="0.1" value="${d.pdd}" oninput="updateAtivo('${d.id}','pdd',parseFloat(this.value)||0)"/>
+      <select onchange="updateAtivo('${d.id}','pddMode',this.value)" style="font-size:11px">
+        <option value="carteira" ${(d.pddMode||'carteira')==='carteira'?'selected':''}>% carteira</option>
+        <option value="fluxo" ${d.pddMode==='fluxo'?'selected':''}>% fluxo</option>
+      </select>
+      <button class="del" onclick="removeAtivo('${d.id}')">×</button>
+    </div>`).join('');
+  updateAtivoPesoBadge();
+}
+
+function addDespCustom(data){
+  const id = 'dc_'+(++despCustomSeq);
+  despCustomState.push(Object.assign({id, nome:'Nova despesa', tipo:'fixo_mensal', valor:0}, data||{}));
+  renderDespCustomList();
+}
+function removeDespCustom(id){ despCustomState = despCustomState.filter(d=>d.id!==id); renderDespCustomList(); }
+function updateDespCustom(id, f, v){ const d = despCustomState.find(x=>x.id===id); if (d) d[f]=v; }
+function renderDespCustomList(){
+  const host = document.getElementById('despCustomList');
+  if (!despCustomState.length){ host.innerHTML='<p class="text-xs muted italic">Nenhuma despesa customizada.</p>'; return; }
+  host.innerHTML = despCustomState.map(d=>`
+    <div class="desp-row">
+      <label class="field"><span>Nome</span><input type="text" value="${escapeHtml(d.nome)}" oninput="updateDespCustom('${d.id}','nome',this.value)"/></label>
+      <label class="field"><span>Modelo</span><select onchange="updateDespCustom('${d.id}','tipo',this.value)">${TIPOS_DESP.map(t=>`<option value="${t.v}" ${t.v===d.tipo?'selected':''}>${t.l}</option>`).join('')}</select></label>
+      <label class="field"><span>Valor</span><input type="number" step="0.01" value="${d.valor}" oninput="updateDespCustom('${d.id}','valor',parseFloat(this.value)||0)"/></label>
+      <button class="del" onclick="removeDespCustom('${d.id}')">×</button>
+    </div>`).join('');
+}
+
+function addEvento(tipo, data){
+  const state = tipo==='captacao' ? captacaoState : amortState;
+  const seqFn = tipo==='captacao' ? (()=>++captacaoSeq) : (()=>++amortSeq);
+  const id = (tipo==='captacao'?'cap_':'am_')+seqFn();
+  state.push(Object.assign({id, classe:'senior', desc:'', valor:0, mesInicio:2, duracao:6}, data||{}));
+  if (tipo==='captacao') renderCaptacaoList(); else renderAmortList();
+}
+function removeEvento(tipo, id){
+  if (tipo==='captacao'){ captacaoState = captacaoState.filter(d=>d.id!==id); renderCaptacaoList(); }
+  else { amortState = amortState.filter(d=>d.id!==id); renderAmortList(); }
+}
+function updateEvento(tipo, id, f, v){
+  const state = tipo==='captacao' ? captacaoState : amortState;
+  const d = state.find(x=>x.id===id);
+  if (d) d[f]=v;
+}
+function renderEventoRow(tipo, d){
+  const classes = tipo==='captacao' ? CLASSES_EVENTO.filter(c=>c.v!=='sub') : CLASSES_EVENTO;
+  return `
+    <div class="evento-row">
+      <select onchange="updateEvento('${tipo}','${d.id}','classe',this.value)">${classes.map(c=>`<option value="${c.v}" ${c.v===d.classe?'selected':''}>${c.l}</option>`).join('')}</select>
+      <input type="text" placeholder="Descrição" value="${escapeHtml(d.desc||'')}" oninput="updateEvento('${tipo}','${d.id}','desc',this.value)"/>
+      <input type="number" step="100000" value="${d.valor}" oninput="updateEvento('${tipo}','${d.id}','valor',parseFloat(this.value)||0)"/>
+      <input type="number" step="1" value="${d.mesInicio}" oninput="updateEvento('${tipo}','${d.id}','mesInicio',parseInt(this.value)||1)"/>
+      <input type="number" step="1" value="${d.duracao}" oninput="updateEvento('${tipo}','${d.id}','duracao',parseInt(this.value)||1)"/>
+      <button class="del" onclick="removeEvento('${tipo}','${d.id}')">×</button>
+    </div>`;
+}
+function renderCaptacaoList(){
+  const host = document.getElementById('captacaoList');
+  if (!captacaoState.length){ host.innerHTML='<p class="text-xs muted italic px-2">Nenhum evento.</p>'; return; }
+  host.innerHTML = captacaoState.map(d=>renderEventoRow('captacao',d)).join('');
+}
+function renderAmortList(){
+  const host = document.getElementById('amortList');
+  if (!amortState.length){ host.innerHTML='<p class="text-xs muted italic px-2">Nenhuma amortização.</p>'; return; }
+  host.innerHTML = amortState.map(d=>renderEventoRow('amort',d)).join('');
+}
+
+/* ===================== CENÁRIOS ===================== */
+function addCenario(data){
+  const id = 'cn_'+(++cenarioSeq);
+  const row = Object.assign({id, nome:'Cenário '+cenarioSeq, ajustes:[]}, data||{});
+  cenarioState.push(row);
+  renderCenarioList();
+}
+function removeCenario(id){ cenarioState = cenarioState.filter(d=>d.id!==id); renderCenarioList(); }
+function updateCenarioNome(id, nome){ const d = cenarioState.find(x=>x.id===id); if (d) d.nome = nome; }
+function addAjuste(cenId){
+  const c = cenarioState.find(x=>x.id===cenId); if (!c) return;
+  const firstVar = VARS_STRESS[0];
+  c.ajustes.push({id:'aj_'+Math.random().toString(36).slice(2,8), var:firstVar.v, valor:firstVar.default});
+  renderCenarioList();
+}
+function removeAjuste(cenId, ajId){
+  const c = cenarioState.find(x=>x.id===cenId); if (!c) return;
+  c.ajustes = c.ajustes.filter(a=>a.id!==ajId);
+  renderCenarioList();
+}
+function updateAjuste(cenId, ajId, field, value){
+  const c = cenarioState.find(x=>x.id===cenId); if (!c) return;
+  const a = c.ajustes.find(x=>x.id===ajId); if (!a) return;
+  if (field==='var'){
+    a.var = value;
+    const def = VARS_STRESS.find(v=>v.v===value);
+    if (def) a.valor = def.default;
+  } else {
+    a[field] = value;
+  }
+  renderCenarioList();
+}
+function renderCenarioList(){
+  const host = document.getElementById('cenarioList');
+  if (!cenarioState.length){
+    host.innerHTML = '<div class="card p-5"><p class="text-sm muted italic">Nenhum cenário criado. Clique em "+ Novo cenário" ou use os presets.</p></div>';
+    return;
+  }
+  host.innerHTML = cenarioState.map(c=>`
+    <div class="cenario-card">
+      <div class="flex items-center justify-between mb-3">
+        <input type="text" value="${escapeHtml(c.nome)}" oninput="updateCenarioNome('${c.id}',this.value)" style="font-family:'Fraunces',serif;font-size:18px;font-weight:600;border:none;background:transparent;padding:0;width:60%"/>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost btn-small" onclick="addAjuste('${c.id}')">+ Ajuste</button>
+          <button class="btn btn-ghost btn-small" onclick="removeCenario('${c.id}')" style="color:var(--neg)">Remover</button>
+        </div>
+      </div>
+      ${c.ajustes.length === 0 ? '<p class="text-xs muted italic">Nenhum ajuste. Sem ajustes, o cenário é idêntico ao base.</p>' :
+        c.ajustes.map(a=>{
+          const def = VARS_STRESS.find(v=>v.v===a.var);
+          return `
+          <div class="cenario-adj">
+            <select onchange="updateAjuste('${c.id}','${a.id}','var',this.value)">
+              ${VARS_STRESS.map(v=>`<option value="${v.v}" ${v.v===a.var?'selected':''}>${v.l}</option>`).join('')}
+            </select>
+            <input type="number" step="0.01" value="${a.valor}" oninput="updateAjuste('${c.id}','${a.id}','valor',parseFloat(this.value)||0)"/>
+            <div class="text-[10px] muted self-center">${def?.hint||''}</div>
+            <button class="del" onclick="removeAjuste('${c.id}','${a.id}')">×</button>
+          </div>`;
+        }).join('')
+      }
+    </div>`).join('');
+}
+function loadCenariosPreset(){
+  if (cenarioState.length && !confirm('Substituir cenários atuais?')) return;
+  cenarioState = [];
+  cenarioSeq = 0;
+  addCenario({nome:'Stress moderado', ajustes:[
+    {id:'aj_m1', var:'pdd_mult',  valor:1.5},
+    {id:'aj_m2', var:'orig_mult', valor:0.8},
+  ]});
+  addCenario({nome:'Stress severo', ajustes:[
+    {id:'aj_s1', var:'pdd_mult',   valor:2.5},
+    {id:'aj_s2', var:'orig_mult',  valor:0.5},
+    {id:'aj_s3', var:'taxa_delta', valor:-1.5},
+  ]});
+  addCenario({nome:'Otimista', ajustes:[
+    {id:'aj_o1', var:'pdd_mult',   valor:0.7},
+    {id:'aj_o2', var:'taxa_delta', valor:0.5},
+  ]});
+  addCenario({nome:'Choque de juros', ajustes:[
+    {id:'aj_j1', var:'cdi_delta',  valor:3},
+    {id:'aj_j2', var:'pdd_mult',   valor:1.3},
+  ]});
+}
+
+/* Aplica ajustes de um cenário sobre um objeto de premissas (clonado) */
+function aplicarAjustes(p, ajustes){
+  ajustes.forEach(a=>{
+    switch(a.var){
+      case 'pdd_mult':
+        p.ativos.forEach(at=> at.pdd = at.pdd * a.valor);
+        break;
+      case 'taxa_delta':
+        p.ativos.forEach(at=> at.taxa = at.taxa + a.valor);
+        break;
+      case 'orig_mult':
+        p.originacaoMensal = p.originacaoMensal * a.valor;
+        break;
+      case 'cdi_delta':
+        p.cdiAno1 += a.valor; p.cdiAno2 += a.valor; p.cdiAno3 += a.valor; p.cdiTerminal += a.valor;
+        break;
+      case 'ipca_delta':
+        p.ipcaAno1 += a.valor; p.ipcaAno2 += a.valor; p.ipcaAno3 += a.valor; p.ipcaTerminal += a.valor;
+        break;
+      case 'perf_off':
+        if (a.valor >= 0.5) p.perfOn = false;
+        break;
+      case 'reserva_abs':
+        p.reservaMinima = a.valor;
+        break;
+      case 'prazo_mult':
+        p.ativos.forEach(at=> at.prazo = Math.max(1, Math.round(at.prazo * a.valor)));
+        break;
+    }
+  });
+  return p;
+}
+
+/* ===================== Inputs ===================== */
+function getInputs(){
+  const g = id => parseFloat(document.getElementById(id).value)||0;
+  const s = id => document.getElementById(id).value;
+  return {
+    nomeFundo: s('nomeFundo'), gestor: s('gestor'), administrador: s('administrador'),
+    prazoMeses: Math.max(1, g('prazoMeses')),
+    reservaMinima: g('reservaMinima'),
+    tipoFundo: s('tipoFundo'), liquidezDias: g('liquidezDias'),
+    capSenior: g('capSenior'), capMez: g('capMez'), capSub: g('capSub'),
+    rampOn: s('rampOn')==='1', rampClasse: s('rampClasse'),
+    rampTeto: g('rampTeto'), rampTetoMes: g('rampTetoMes'),
+    recompOn: s('recompOn')==='1',
+    recompRazao: s('recompRazao'),
+    recompVia: s('recompVia'),
+    recompGatilho: g('recompGatilho'), recompTarget: g('recompTarget'),
+    recompTetoMes: g('recompTetoMes'), recompTetoAcum: g('recompTetoAcum'),
+    wfOn: s('wfOn')==='1', wfColchao: g('wfColchao'), wfOrdem: s('wfOrdem'),
+    desubOn: s('desubOn')==='1',
+    desubGatilho: g('desubGatilho'), desubTarget: g('desubTarget'), desubTetoMes: g('desubTetoMes'),
+    cdiAno1: g('cdiAno1'), cdiAno2: g('cdiAno2'), cdiAno3: g('cdiAno3'), cdiTerminal: g('cdiTerminal'),
+    ipcaAno1: g('ipcaAno1'), ipcaAno2: g('ipcaAno2'), ipcaAno3: g('ipcaAno3'), ipcaTerminal: g('ipcaTerminal'),
+    spreadSenior: g('spreadSenior'), spreadMez: g('spreadMez'),
+    caixaCdiPct: g('caixaCdiPct'),
+    originacaoMensal: g('originacaoMensal'),
+    tetoCarteira: g('tetoCarteira'),
+    origMes1: g('origMes1'),
+    origRampMeses: g('origRampMeses'),
+    perfOn: s('perfOn')==='1', perfPct: g('perfPct'), perfBenchTipo: s('perfBenchTipo'), perfBench: g('perfBench'), perfBase: s('perfBase'),
+    taxaAdmAA: g('taxaAdmAA'), minAdmMes: g('minAdmMes'),
+    taxaGestaoAA: g('taxaGestaoAA'), minGestaoMes: g('minGestaoMes'),
+    taxaCustodiaAA: g('taxaCustodiaAA'),
+    auditoriaMensal: g('auditoriaMensal'),
+    outrasDespMes: g('outrasDespMes'),
+    despEstruturacao: g('despEstruturacao'),
+    ativos: ativoState.map(d=>({...d})),
+    despCustom: despCustomState.map(d=>({...d})),
+    captacaoProg: captacaoState.map(d=>({...d})),
+    amortProg: amortState.map(d=>({...d})),
+  };
+}
+
+function setInputs(p){
+  const skip = new Set(['despCustom','ativos','captacaoProg','amortProg','cenarios']);
+  Object.keys(p).forEach(k=>{
+    if (skip.has(k)) return;
+    const el = document.getElementById(k);
+    if (el) el.value = (typeof p[k]==='boolean' ? (p[k]?'1':'0') : p[k]);
+  });
+  despCustomState = Array.isArray(p.despCustom) ? p.despCustom.map(d=>({...d})) : [];
+  ativoState     = Array.isArray(p.ativos)     ? p.ativos.map(d=>({...d}))     : [];
+  captacaoState  = Array.isArray(p.captacaoProg)? p.captacaoProg.map(d=>({...d})) : [];
+  amortState     = Array.isArray(p.amortProg)  ? p.amortProg.map(d=>({...d}))  : [];
+  renderDespCustomList(); renderAtivoList(); renderCaptacaoList(); renderAmortList();
+}
+
+/* ===================== Curvas & helpers ===================== */
+function curvaAA(t, p, prefix){
+  if (t <= 12) return p[prefix+'Ano1'];
+  if (t <= 24) return p[prefix+'Ano2'];
+  if (t <= 36) return p[prefix+'Ano3'];
+  return p[prefix+'Terminal'];
+}
+const aaToM = aa => Math.pow(1 + aa/100, 1/12) - 1;
+
+function taxaMensalAtivo(a, t, p){
+  if (a.tipo === 'pre')  return a.taxa/100;
+  if (a.tipo === 'cdi')  return aaToM(curvaAA(t,p,'cdi')  + a.taxa);
+  if (a.tipo === 'ipca') return aaToM(curvaAA(t,p,'ipca') + a.taxa);
+  return 0;
+}
+function calcDespCustom(d, ctx){
+  switch(d.tipo){
+    case 'fixo_mensal':     return d.valor;
+    case 'pct_pl_aa':       return ctx.PLini * (d.valor/100/12);
+    case 'pct_carteira_aa': return ctx.carteiraIni * (d.valor/100/12);
+    case 'pct_originacao':  return ctx.originacao * (d.valor/100);
+    case 'unico_mes1':      return ctx.t === 1 ? d.valor : 0;
+    default: return 0;
+  }
+}
+function eventosNoMes(eventos, t, classe){
+  return eventos
+    .filter(e => e.classe===classe && t >= e.mesInicio && t < e.mesInicio + e.duracao)
+    .reduce((s,e)=>s+(e.valor||0),0);
+}
+function irr(flows, guess=0.01){
+  if (flows.length < 2) return null;
+  let hasPos=false, hasNeg=false;
+  flows.forEach(f=>{ if (f>0) hasPos=true; if (f<0) hasNeg=true; });
+  if (!hasPos || !hasNeg) return null;
+  let r = guess;
+  for (let it=0; it<200; it++){
+    let npv=0, d=0;
+    for (let t=0; t<flows.length; t++){
+      const v = Math.pow(1+r,t);
+      npv += flows[t]/v;
+      d   += -t*flows[t]/(v*(1+r));
+    }
+    if (Math.abs(d)<1e-12) break;
+    const rn = r - npv/d;
+    if (!isFinite(rn)) return null;
+    if (Math.abs(rn-r) < 1e-10) return rn;
+    r = rn;
+    if (r <= -0.9999) r = -0.99;
+  }
+  return r;
+}
+
+/* ===================== MOTOR ===================== */
+function simulate(p){
+  const admM = p.taxaAdmAA/100/12, gesM = p.taxaGestaoAA/100/12, cusM = p.taxaCustodiaAA/100/12;
+  const reservaPct = p.reservaMinima/100;
+  const caixaCdiPct = p.caixaCdiPct/100;
+
+  const carteiraPorAtivo = {};
+  p.ativos.forEach(a => carteiraPorAtivo[a.id] = 0);
+
+  let caixa=0, senior=0, mez=0, sub=0;
+  let rampUsado=0, recompUsado=0;
+  const fluxoSr=[], fluxoMz=[], fluxoSb=[];
+  const rows=[];
+  let cdiAcum=1, seniorAcum=1, mezAcum=1, subAcum=1;
+
+  for (let t=1; t<=p.prazoMeses; t++){
+    const caixaIni_raw = caixa;
+    const seniorIni_raw = senior, mezIni_raw = mez, subIni_raw = sub;
+
+    let capSrInit=0, capMzInit=0, capSbInit=0;
+    if (t===1){ capSrInit=p.capSenior; capMzInit=p.capMez; capSbInit=p.capSub; }
+    const capSrProg = eventosNoMes(p.captacaoProg, t, 'senior');
+    const capMzProg = eventosNoMes(p.captacaoProg, t, 'mez');
+
+    const capSrTotal = capSrInit + capSrProg;
+    const capMzTotal = capMzInit + capMzProg;
+    const capSbTotal = capSbInit;
+    caixa += capSrTotal + capMzTotal + capSbTotal;
+    senior += capSrTotal; mez += capMzTotal; sub += capSbTotal;
+
+    fluxoSr.push(capSrTotal>0 ? -capSrTotal : 0);
+    fluxoMz.push(capMzTotal>0 ? -capMzTotal : 0);
+    fluxoSb.push(capSbTotal>0 ? -capSbTotal : 0);
+
+    const caixaIni = caixa;
+    const seniorIni=senior, mezIni=mez, subIni=sub;
+    const PLini = senior+mez+sub;
+    const carteiraIni = Object.values(carteiraPorAtivo).reduce((s,v)=>s+v,0);
+
+    const cdiAA_t = curvaAA(t,p,'cdi'), ipcaAA_t = curvaAA(t,p,'ipca');
+    const cdiM = aaToM(cdiAA_t);
+    const seniorM = aaToM(cdiAA_t + p.spreadSenior);
+    const mezM    = aaToM(cdiAA_t + p.spreadMez);
+
+    let amortizacaoTotal=0, jurosTotal=0, perdasTotal=0;
+    const detalheAtivo={};
+    p.ativos.forEach(a=>{
+      const cIni = carteiraPorAtivo[a.id];
+      const amort = cIni / Math.max(1, a.prazo);
+      const taxaM = taxaMensalAtivo(a, t, p);
+      const juros = cIni * taxaM;
+      /* PDD: dois modos por ativo */
+      const pddMode = a.pddMode || 'carteira';
+      const perda = pddMode === 'fluxo'
+        ? (amort + juros) * (a.pdd/100)   /* % sobre fluxo recebido */
+        : cIni * (a.pdd/100);              /* % sobre saldo da carteira */
+      detalheAtivo[a.id] = {cIni, amort, juros, perda, taxaM, pddMode};
+      carteiraPorAtivo[a.id] = Math.max(0, cIni - amort - perda);
+      amortizacaoTotal += amort; jurosTotal += juros; perdasTotal += perda;
+    });
+
+    const jurosCaixa = caixaIni * cdiM * caixaCdiPct;
+    caixa += amortizacaoTotal + jurosTotal + jurosCaixa;
+
+    /* Originação: com ramp-up e teto de carteira */
+    let origAlvo = p.originacaoMensal;
+    if (p.origRampMeses > 0 && t <= p.origRampMeses){
+      const inicio = p.origMes1 || 0;
+      origAlvo = inicio + (p.originacaoMensal - inicio) * (t / p.origRampMeses);
+    }
+    const PLestim = senior+mez+sub;
+    const reservaMin = PLestim * reservaPct;
+    const disponivel = Math.max(0, caixa - reservaMin);
+    let origTotal = Math.min(disponivel, origAlvo);
+    /* Teto de carteira: limitar se carteira + originação > teto */
+    if (p.tetoCarteira > 0){
+      const carteiraAtual = Object.values(carteiraPorAtivo).reduce((s,v)=>s+v,0);
+      const espacoCarteira = Math.max(0, p.tetoCarteira - carteiraAtual);
+      origTotal = Math.min(origTotal, espacoCarteira);
+    }
+    const origDeficit = origAlvo - origTotal;
+    p.ativos.forEach(a=>{
+      const parte = origTotal * (a.peso/100);
+      carteiraPorAtivo[a.id] += parte;
+      detalheAtivo[a.id].orig = parte;
+    });
+    caixa -= origTotal;
+
+    const despAdm = Math.max(PLini*admM, p.minAdmMes);
+    const despGestao = Math.max(PLini*gesM, p.minGestaoMes);
+    const despCustodia = PLini*cusM;
+    const despAud = p.auditoriaMensal;
+    const despOutras = p.outrasDespMes;
+    const despEstrut = (t===1) ? p.despEstruturacao : 0;
+    const ctxDc = {t, PLini, carteiraIni, originacao: origTotal};
+    const despCustomDetalhe={};
+    let despCustomTotal=0;
+    p.despCustom.forEach(d=>{
+      const v = calcDespCustom(d, ctxDc);
+      despCustomDetalhe[d.id]=v; despCustomTotal+=v;
+    });
+    const despOpsBase = despAdm+despGestao+despCustodia+despAud+despOutras+despEstrut+despCustomTotal;
+
+    const receitaAtivos = jurosTotal;
+    const receitaCaixa  = jurosCaixa;
+    const receitaTotal  = receitaAtivos + receitaCaixa;
+    const resultadoPre  = receitaTotal - perdasTotal - despOpsBase;
+
+    let taxaPerf = 0;
+    if (p.perfOn && p.perfPct > 0){
+      /* Benchmark mensal: % do CDI ou CDI + spread a.a. */
+      let benchM;
+      if ((p.perfBenchTipo||'pct_cdi') === 'cdi_plus'){
+        benchM = aaToM(cdiAA_t + p.perfBench); /* CDI + spread a.a. → taxa mensal */
+      } else {
+        benchM = cdiM * (p.perfBench/100); /* X% do CDI mensal */
+      }
+      let base = 0;
+      if (p.perfBase==='excedente_pl'){
+        base = Math.max(0, resultadoPre - PLini*benchM);
+      } else {
+        const rendSrT = seniorIni*seniorM;
+        const rendMzT = mezIni*mezM;
+        const residuoSub = resultadoPre - rendSrT - rendMzT;
+        base = Math.max(0, residuoSub - subIni*benchM);
+      }
+      taxaPerf = base * (p.perfPct/100);
+    }
+
+    const despesas = despOpsBase + taxaPerf;
+    caixa -= despesas;
+    const resultado = receitaTotal - perdasTotal - despesas;
+
+    const rendSenior = seniorIni*seniorM;
+    const rendMez    = mezIni*mezM;
+    const rendSub    = resultado - rendSenior - rendMez;
+    senior += rendSenior; mez += rendMez; sub += rendSub;
+
+    let amortSrProg = Math.min(eventosNoMes(p.amortProg,t,'senior'), Math.max(0,senior));
+    let amortMzProg = Math.min(eventosNoMes(p.amortProg,t,'mez'),    Math.max(0,mez));
+    let amortSbProg = Math.min(eventosNoMes(p.amortProg,t,'sub'),    Math.max(0,sub));
+    const PLa1 = senior+mez+sub;
+    const dispA1 = Math.max(0, caixa - PLa1*reservaPct);
+    const totA1 = amortSrProg+amortMzProg+amortSbProg;
+    if (totA1 > dispA1 && totA1 > 0){
+      const ratio = dispA1/totA1;
+      amortSrProg *= ratio; amortMzProg *= ratio; amortSbProg *= ratio;
+    }
+    caixa -= (amortSrProg+amortMzProg+amortSbProg);
+    senior -= amortSrProg; mez -= amortMzProg; sub -= amortSbProg;
+
+    let recompAporte=0, recompAporteMez=0, desamortSub=0;
+    const PLa = senior+mez+sub;
+    const razaoTotal = PLa>0 ? (mez+sub)/PLa : 0;
+    const razaoSubOnly = PLa>0 ? sub/PLa : 0;
+    /* Escolhe qual razão monitorar */
+    const razaoMonitorada = (p.recompRazao||'mez_sub') === 'sub_only' ? razaoSubOnly : razaoTotal;
+    const razaoMonitR$ = (p.recompRazao||'mez_sub') === 'sub_only' ? sub : (mez+sub);
+
+    if (p.recompOn && razaoMonitorada*100 < p.recompGatilho){
+      const target = p.recompTarget;
+      if (target < 100){
+        const X = (target*PLa - 100*razaoMonitR$)/(100-target);
+        let aporte = Math.max(0, X);
+        aporte = Math.min(aporte, p.recompTetoMes);
+        aporte = Math.min(aporte, Math.max(0, p.recompTetoAcum - recompUsado));
+        recompAporte = aporte; recompUsado += aporte;
+        caixa += aporte;
+        /* Distribui entre sub ou mez+sub conforme configuração */
+        if ((p.recompVia||'sub') === 'mez_sub' && (mez+sub) > 0){
+          const pctMez = mez / (mez+sub);
+          recompAporteMez = aporte * pctMez;
+          mez += recompAporteMez;
+          sub += (aporte - recompAporteMez);
+        } else {
+          sub += aporte;
+        }
+      }
+    } else if (p.desubOn && razaoTotal*100 > p.desubGatilho){
+      const target = p.desubTarget;
+      if (target < 100){
+        const X = (100*sub - target*PLa)/(100-target);
+        let am = Math.max(0, X);
+        am = Math.min(am, sub, p.desubTetoMes);
+        const reservaNow = (senior+mez+sub)*reservaPct;
+        am = Math.min(am, Math.max(0, caixa - reservaNow));
+        desamortSub = am;
+        caixa -= am; sub -= am;
+      }
+    }
+
+    let wfSr=0, wfMz=0, wfSb=0;
+    if (p.wfOn){
+      const PLnow = senior+mez+sub;
+      const teto = PLnow * (reservaPct + p.wfColchao/100);
+      let excedente = Math.max(0, caixa - teto);
+      if (excedente > 0 && senior > 0){
+        const q = Math.min(excedente, senior);
+        wfSr=q; excedente-=q; senior-=q; caixa-=q;
+      }
+      if (excedente > 0 && (p.wfOrdem==='sr_mz'||p.wfOrdem==='sr_mz_sb') && mez > 0){
+        const q = Math.min(excedente, mez);
+        wfMz=q; excedente-=q; mez-=q; caixa-=q;
+      }
+      if (excedente > 0 && p.wfOrdem==='sr_mz_sb' && sub > 0){
+        const q = Math.min(excedente, sub);
+        wfSb=q; excedente-=q; sub-=q; caixa-=q;
+      }
+    }
+
+    let rampAporte=0;
+    if (p.rampOn && origDeficit > 0 && rampUsado < p.rampTeto){
+      let alvo = Math.min(origDeficit, p.rampTetoMes, p.rampTeto - rampUsado);
+      if (alvo > 0){
+        rampAporte = alvo; rampUsado += alvo;
+        caixa += alvo;
+        if (p.rampClasse==='senior') senior += alvo; else mez += alvo;
+      }
+    }
+
+    const entradaSr = amortSrProg + wfSr;
+    const entradaMz = amortMzProg + wfMz;
+    const entradaSb = amortSbProg + wfSb + desamortSub;
+    const saidaExtraSr = (rampAporte>0 && p.rampClasse==='senior') ? rampAporte : 0;
+    const saidaExtraMz = ((rampAporte>0 && p.rampClasse==='mez') ? rampAporte : 0) + recompAporteMez;
+    const saidaExtraSb = recompAporte - recompAporteMez;
+
+    fluxoSr[fluxoSr.length-1] += entradaSr - saidaExtraSr;
+    fluxoMz[fluxoMz.length-1] += entradaMz - saidaExtraMz;
+    fluxoSb[fluxoSb.length-1] += entradaSb - saidaExtraSb;
+
+    cdiAcum *= (1+cdiM);
+    if (seniorIni > 0) seniorAcum *= (1 + rendSenior/seniorIni);
+    if (mezIni    > 0) mezAcum    *= (1 + rendMez/mezIni);
+    if (subIni    > 0) subAcum    *= (1 + rendSub/subIni);
+
+    const fcOperacional   = jurosTotal + jurosCaixa - despesas;
+    const fcInvestimentos = amortizacaoTotal - origTotal;
+    const fcFinanciamento = capSrTotal + capMzTotal + capSbTotal
+                          + recompAporte + rampAporte
+                          - (amortSrProg + amortMzProg + amortSbProg)
+                          - (wfSr + wfMz + wfSb)
+                          - desamortSub;
+    const variacaoCaixa = fcOperacional + fcInvestimentos + fcFinanciamento;
+
+    const carteiraFim = Object.values(carteiraPorAtivo).reduce((s,v)=>s+v,0);
+    const PLfim = senior+mez+sub;
+    const subRatio = PLfim > 0 ? (mez+sub)/PLfim : 0;
+    const subOnlyRatio = PLfim > 0 ? sub/PLfim : 0;
+
+    const fracJanela = p.liquidezDias / 30;
+    let pp=0, sm=0;
+    p.ativos.forEach(a=>{ const ci=carteiraPorAtivo[a.id]; pp += ci*a.prazo; sm += ci; });
+    const prazoPonderado = sm>0 ? pp/sm : 1;
+    const amortEsperadaJanela = (carteiraFim / Math.max(1, prazoPonderado)) * fracJanela;
+    const caixaDisponivelJanela = caixa + amortEsperadaJanela;
+    const coberturaSenior = senior > 0 ? caixaDisponivelJanela/senior : null;
+
+    rows.push({
+      mes:t, cdiAA_t, ipcaAA_t,
+      caixaIni: caixaIni_raw, carteiraIni,
+      seniorIni: seniorIni_raw, mezIni: mezIni_raw, subIni: subIni_raw, PLini,
+      capSrInit, capSrProg, capMzInit, capMzProg, capSbInit,
+      amortizacaoTotal, jurosTotal, jurosCaixa, perdasTotal, originacao:origTotal, origDeficit,
+      detalheAtivo,
+      despAdm, despGestao, despCustodia, despAud, despOutras, despEstrut,
+      despCustomDetalhe, despCustomTotal, taxaPerf, despesas,
+      receitaAtivos, receitaCaixa, receitaTotal, resultadoPre, resultado,
+      rendSenior, rendMez, rendSub,
+      amortSrProg, amortMzProg, amortSbProg, recompAporte, desamortSub,
+      wfSr, wfMz, wfSb, rampAporte,
+      caixaFim: caixa, carteiraFim, seniorFim: senior, mezFim: mez, subFim: sub, PLfim,
+      subRatio, subOnlyRatio, fcOperacional, fcInvestimentos, fcFinanciamento, variacaoCaixa,
+      cdiAcum: cdiAcum-1, seniorAcum: seniorAcum-1, mezAcum: mezAcum-1, subAcum: subAcum-1,
+      prazoPonderado, amortEsperadaJanela, caixaDisponivelJanela, coberturaSenior,
+    });
+  }
+
+  if (rows.length){
+    const ult = rows[rows.length-1];
+    fluxoSr[fluxoSr.length-1] += ult.seniorFim;
+    fluxoMz[fluxoMz.length-1] += ult.mezFim;
+    fluxoSb[fluxoSb.length-1] += ult.subFim;
+  }
+  const tirMensal = {sr:irr(fluxoSr), mz:irr(fluxoMz), sb:irr(fluxoSb)};
+  const tirAnual = {
+    sr: tirMensal.sr!==null ? Math.pow(1+tirMensal.sr,12)-1 : null,
+    mz: tirMensal.mz!==null ? Math.pow(1+tirMensal.mz,12)-1 : null,
+    sb: tirMensal.sb!==null ? Math.pow(1+tirMensal.sb,12)-1 : null,
+  };
+  return {rows, fluxoSr, fluxoMz, fluxoSb, tirAnual};
+}
+
+/* Extrai métricas agregadas de um resultado de simulação */
+function metricsDoResultado(res, p){
+  const rows = res.rows;
+  const ult = rows[rows.length-1];
+  const plIni = p.capSenior + p.capMez + p.capSub;
+  const retornoPL = ult.PLfim/plIni - 1;
+  const cdiAc = ult.cdiAcum;
+  const subRatioMin = Math.min(...rows.map(r=>r.subRatio));
+  const subOnlyRatioMin = Math.min(...rows.map(r=>r.subOnlyRatio));
+  const mesesPos = rows.filter(r=>r.resultado>0).length;
+  const coberturaMin = p.tipoFundo==='aberto' ? Math.min(...rows.map(r=>r.coberturaSenior||Infinity)) : null;
+  const mesesStress = p.tipoFundo==='aberto' ? rows.filter(r=>r.coberturaSenior<1).length : null;
+  const seniorPctCdi = cdiAc>0 ? ult.seniorAcum/cdiAc : null;
+  return {
+    plFinal: ult.PLfim, retornoPL, cdiAc,
+    seniorAc: ult.seniorAcum, mezAc: ult.mezAcum, subAc: ult.subAcum,
+    seniorPctCdi,
+    tirSr: res.tirAnual.sr, tirMz: res.tirAnual.mz, tirSb: res.tirAnual.sb,
+    subRatioMin, subOnlyRatioMin, mesesPos, mesesTotal: rows.length,
+    coberturaMin, mesesStress,
+  };
+}
+
+/* ===================== RENDER TABELAS (mesmo que v0.4) ===================== */
+function renderRodagem(rows){
+  const header = `<thead><tr>
+    <th class="label">Mês</th><th>CDI a.a.</th>
+    <th>Caixa ini.</th><th>Cart. ini.</th><th>PL ini.</th>
+    <th>Amort.</th><th>Juros DCs</th><th>Juros cx</th><th>Perdas</th>
+    <th>Origin.</th><th>Défic.</th>
+    <th>Despesas</th><th>Perf.</th><th>Resultado</th>
+    <th>Recomp.</th><th>Ramp</th><th>Amort prog</th><th>Waterfall</th><th>Desamort</th>
+    <th>Caixa fim</th><th>Cart. fim</th><th>PL fim</th><th>Sub total</th><th>Sub pura</th>
+  </tr></thead>`;
+  const body = rows.map(r=>`<tr>
+    <td class="label">${r.mes}</td><td>${r.cdiAA_t.toFixed(2)}%</td>
+    <td>${fmt(r.caixaIni)}</td><td>${fmt(r.carteiraIni)}</td><td>${fmt(r.PLini)}</td>
+    <td>${fmt(r.amortizacaoTotal)}</td><td>${fmt(r.jurosTotal)}</td><td>${fmt(r.jurosCaixa)}</td>
+    <td class="neg">${fmt(r.perdasTotal)}</td>
+    <td>${fmt(r.originacao)}</td><td class="neg">${r.origDeficit>0?fmt(r.origDeficit):'—'}</td>
+    <td class="neg">${fmt(r.despesas-r.taxaPerf)}</td><td class="neg">${fmt(r.taxaPerf)}</td>
+    <td class="${r.resultado<0?'neg':'pos'}">${fmtSign(r.resultado)}</td>
+    <td>${fmt(r.recompAporte)}</td><td>${fmt(r.rampAporte)}</td>
+    <td class="neg">${fmt(r.amortSrProg+r.amortMzProg+r.amortSbProg)}</td>
+    <td class="neg">${fmt(r.wfSr+r.wfMz+r.wfSb)}</td>
+    <td class="neg">${fmt(r.desamortSub)}</td>
+    <td>${fmt(r.caixaFim)}</td><td>${fmt(r.carteiraFim)}</td><td>${fmt(r.PLfim)}</td>
+    <td>${(r.subRatio*100).toFixed(1)}%</td>
+    <td>${(r.subOnlyRatio*100).toFixed(1)}%</td>
+  </tr>`).join('');
+  document.getElementById('tblRodagem').innerHTML = header + '<tbody>' + body + '</tbody>';
+}
+
+function renderDRE(rows, p){
+  const months = rows.map(r=>`<th>M${r.mes}</th>`).join('');
+  const row = (label, getter, cls='') => `<tr class="${cls}"><td class="label">${label}</td>${rows.map(r=>`<td class="${cls}">${fmtSign(getter(r))}</td>`).join('')}</tr>`;
+  const sec = (label) => `<tr class="section"><td class="label" colspan="${rows.length+1}">${label}</td></tr>`;
+  const ativoRows = p.ativos.map(a=>row('   • '+a.nome, r => (r.detalheAtivo[a.id]?.juros)||0)).join('');
+  const customRows = p.despCustom.map(d=>row('(–) '+d.nome, r=>-(r.despCustomDetalhe[d.id]||0), 'neg')).join('');
+  const html = `
+    <thead><tr><th class="label">Conta</th>${months}</tr></thead>
+    <tbody>
+      ${sec('Receitas')}
+      ${row('(+) Receita de juros – carteira DC', r=>r.receitaAtivos)}
+      ${ativoRows}
+      ${row('(+) Receita de juros – caixa', r=>r.receitaCaixa)}
+      <tr class="subtotal"><td class="label">(=) Receita total</td>${rows.map(r=>`<td>${fmtSign(r.receitaTotal)}</td>`).join('')}</tr>
+      ${row('(–) PDD / perdas', r=>-r.perdasTotal, 'neg')}
+      <tr class="subtotal"><td class="label">(=) Margem financeira</td>${rows.map(r=>`<td>${fmtSign(r.receitaTotal-r.perdasTotal)}</td>`).join('')}</tr>
+      ${sec('Despesas operacionais')}
+      ${row('(–) Taxa de administração', r=>-r.despAdm, 'neg')}
+      ${row('(–) Taxa de gestão', r=>-r.despGestao, 'neg')}
+      ${row('(–) Taxa de custódia', r=>-r.despCustodia, 'neg')}
+      ${row('(–) Auditoria', r=>-r.despAud, 'neg')}
+      ${row('(–) Outras', r=>-r.despOutras, 'neg')}
+      ${row('(–) Estruturação', r=>-r.despEstrut, 'neg')}
+      ${customRows}
+      ${row('(–) Performance', r=>-r.taxaPerf, 'neg')}
+      <tr class="subtotal"><td class="label">(=) Despesas totais</td>${rows.map(r=>`<td class="neg">${fmtSign(-r.despesas)}</td>`).join('')}</tr>
+      <tr class="total"><td class="label">Resultado do período</td>${rows.map(r=>`<td class="${r.resultado<0?'neg':'pos'}">${fmtSign(r.resultado)}</td>`).join('')}</tr>
+      ${row('  Sênior', r=>r.rendSenior)}
+      ${row('  Mezanino', r=>r.rendMez)}
+      ${row('  Subordinada', r=>r.rendSub)}
+    </tbody>`;
+  document.getElementById('tblDRE').innerHTML = html;
+}
+
+function renderFC(rows, p){
+  const months = rows.map(r=>`<th>M${r.mes}</th>`).join('');
+  const row = (label, getter, cls='') => `<tr class="${cls}"><td class="label">${label}</td>${rows.map(r=>`<td class="${cls}">${fmtSign(getter(r))}</td>`).join('')}</tr>`;
+  const sec = (label) => `<tr class="section"><td class="label" colspan="${rows.length+1}">${label}</td></tr>`;
+  const customRows = p.despCustom.map(d=>row('(–) '+d.nome, r=>-(r.despCustomDetalhe[d.id]||0), 'neg')).join('');
+  const html = `
+    <thead><tr><th class="label">Conta</th>${months}</tr></thead>
+    <tbody>
+      <tr class="subtotal"><td class="label">Saldo inicial</td>${rows.map(r=>`<td>${fmt(r.caixaIni)}</td>`).join('')}</tr>
+      ${sec('Operacionais')}
+      ${row('(+) Juros DCs', r=>r.jurosTotal)}
+      ${row('(+) Juros caixa', r=>r.jurosCaixa)}
+      ${row('(–) Adm', r=>-r.despAdm, 'neg')}
+      ${row('(–) Gestão', r=>-r.despGestao, 'neg')}
+      ${row('(–) Custódia', r=>-r.despCustodia, 'neg')}
+      ${row('(–) Auditoria', r=>-r.despAud, 'neg')}
+      ${row('(–) Outras', r=>-r.despOutras, 'neg')}
+      ${row('(–) Estruturação', r=>-r.despEstrut, 'neg')}
+      ${customRows}
+      ${row('(–) Performance', r=>-r.taxaPerf, 'neg')}
+      <tr class="subtotal"><td class="label">(=) Operacional</td>${rows.map(r=>`<td>${fmtSign(r.fcOperacional)}</td>`).join('')}</tr>
+      ${sec('Investimento')}
+      ${row('(+) Amort DCs', r=>r.amortizacaoTotal)}
+      ${row('(–) Aquisição DCs', r=>-r.originacao, 'neg')}
+      <tr class="subtotal"><td class="label">(=) Investimento</td>${rows.map(r=>`<td>${fmtSign(r.fcInvestimentos)}</td>`).join('')}</tr>
+      ${sec('Financiamento')}
+      ${row('(+) Capt sênior', r=>r.capSrInit+r.capSrProg)}
+      ${row('(+) Capt mez', r=>r.capMzInit+r.capMzProg)}
+      ${row('(+) Capt sub', r=>r.capSbInit)}
+      ${row('(+) Recomposição sub', r=>r.recompAporte)}
+      ${row('(+) Ramp', r=>r.rampAporte)}
+      ${row('(–) Amort sr', r=>-r.amortSrProg, 'neg')}
+      ${row('(–) Amort mz', r=>-r.amortMzProg, 'neg')}
+      ${row('(–) Amort sb', r=>-r.amortSbProg, 'neg')}
+      ${row('(–) Waterfall sr', r=>-r.wfSr, 'neg')}
+      ${row('(–) Waterfall mz', r=>-r.wfMz, 'neg')}
+      ${row('(–) Waterfall sb', r=>-r.wfSb, 'neg')}
+      ${row('(–) Desamort sub', r=>-r.desamortSub, 'neg')}
+      <tr class="subtotal"><td class="label">(=) Financiamento</td>${rows.map(r=>`<td>${fmtSign(r.fcFinanciamento)}</td>`).join('')}</tr>
+      <tr class="subtotal"><td class="label">Variação</td>${rows.map(r=>`<td>${fmtSign(r.variacaoCaixa)}</td>`).join('')}</tr>
+      <tr class="total"><td class="label">Saldo final</td>${rows.map(r=>`<td>${fmt(r.caixaFim)}</td>`).join('')}</tr>
+    </tbody>`;
+  document.getElementById('tblFC').innerHTML = html;
+}
+
+function renderBP(rows){
+  const months = rows.map(r=>`<th>M${r.mes}</th>`).join('');
+  const row = (label, getter, cls='') => `<tr class="${cls}"><td class="label">${label}</td>${rows.map(r=>`<td class="${cls}">${fmt(getter(r))}</td>`).join('')}</tr>`;
+  const sec = (label) => `<tr class="section"><td class="label" colspan="${rows.length+1}">${label}</td></tr>`;
+  const html = `
+    <thead><tr><th class="label">Conta</th>${months}</tr></thead>
+    <tbody>
+      ${sec('Ativo')}
+      ${row('Disponibilidades', r=>r.caixaFim)}
+      ${row('Carteira DCs', r=>r.carteiraFim)}
+      <tr class="subtotal"><td class="label">Ativo total</td>${rows.map(r=>`<td>${fmt(r.caixaFim+r.carteiraFim)}</td>`).join('')}</tr>
+      ${sec('Passivo / PL')}
+      ${row('Sênior', r=>r.seniorFim)}
+      ${row('Mezanino', r=>r.mezFim)}
+      ${row('Subordinada', r=>r.subFim)}
+      <tr class="total"><td class="label">Passivo + PL</td>${rows.map(r=>`<td>${fmt(r.PLfim)}</td>`).join('')}</tr>
+    </tbody>`;
+  document.getElementById('tblBP').innerHTML = html;
+}
+
+function renderLiquidez(rows, p){
+  const sub = document.getElementById('liquidezSubtitle');
+  const kpis = document.getElementById('liquidezKpis');
+  const tbl = document.getElementById('tblLiquidez');
+  const canvas = document.getElementById('chartLiquidez');
+
+  if (p.tipoFundo === 'fechado'){
+    sub.textContent = 'Fundo fechado — sem direito de resgate.';
+    const durationMedia = rows.reduce((s,r)=>s+r.prazoPonderado,0)/rows.length;
+    const ult = rows[rows.length-1];
+    kpis.innerHTML = `
+      <div class="card p-4"><div class="kpi-label">Duration média</div><div class="kpi-val mt-2">${durationMedia.toFixed(1)} m</div></div>
+      <div class="card p-4"><div class="kpi-label">Horizonte</div><div class="kpi-val mt-2">${rows.length} m</div></div>
+      <div class="card p-4"><div class="kpi-label">Carteira final</div><div class="kpi-val mt-2">R$ ${fmt(ult.carteiraFim)}</div></div>
+      <div class="card p-4"><div class="kpi-label">PL final</div><div class="kpi-val mt-2">R$ ${fmt(ult.PLfim)}</div></div>`;
+    tbl.innerHTML = '';
+    if (charts.liquidez){ charts.liquidez.destroy(); charts.liquidez=null; }
+    canvas.parentElement.style.display='none';
+    return;
+  }
+
+  canvas.parentElement.style.display='';
+  sub.textContent = `Fundo aberto · janela D+${p.liquidezDias}. Cobertura = (caixa + amortizações esperadas na janela) / PL sênior.`;
+  const coberturas = rows.map(r=>r.coberturaSenior||0);
+  const minCob = Math.min(...coberturas);
+  const minMes = coberturas.indexOf(minCob)+1;
+  const mesesRuins = coberturas.filter(c=>c<1).length;
+  kpis.innerHTML = `
+    <div class="card p-4"><div class="kpi-label">Cobertura média</div><div class="kpi-val mt-2">${(coberturas.reduce((s,v)=>s+v,0)/coberturas.length*100).toFixed(1)}%</div></div>
+    <div class="card p-4"><div class="kpi-label">Cobertura mínima (M${minMes})</div><div class="kpi-val mt-2">${(minCob*100).toFixed(1)}%</div></div>
+    <div class="card p-4"><div class="kpi-label">Meses < 100%</div><div class="kpi-val mt-2">${mesesRuins} / ${rows.length}</div></div>
+    <div class="card p-4"><div class="kpi-label">Duration média</div><div class="kpi-val mt-2">${(rows.reduce((s,r)=>s+r.prazoPonderado,0)/rows.length).toFixed(1)} m</div></div>`;
+
+  const header = `<thead><tr><th class="label">Mês</th><th>Caixa</th><th>Carteira</th><th>Duration</th><th>Amort janela</th><th>Cx disp D+${p.liquidezDias}</th><th>PL sênior</th><th>Cobertura</th><th>Status</th></tr></thead>`;
+  const body = rows.map(r=>{
+    const cob=r.coberturaSenior||0;
+    const st = cob>=1.2 ? '<span class="pill ok">OK</span>' : (cob>=1 ? '<span class="pill warn">Atenção</span>' : '<span class="pill bad">Stress</span>');
+    return `<tr><td class="label">${r.mes}</td><td>${fmt(r.caixaFim)}</td><td>${fmt(r.carteiraFim)}</td><td>${r.prazoPonderado.toFixed(1)}</td><td>${fmt(r.amortEsperadaJanela)}</td><td>${fmt(r.caixaDisponivelJanela)}</td><td>${fmt(r.seniorFim)}</td><td>${(cob*100).toFixed(1)}%</td><td style="text-align:left">${st}</td></tr>`;
+  }).join('');
+  tbl.innerHTML = header + '<tbody>'+body+'</tbody>';
+
+  if (charts.liquidez) charts.liquidez.destroy();
+  const labels = rows.map(r=>'M'+r.mes);
+  charts.liquidez = new Chart(canvas,{
+    type:'line',
+    data:{labels, datasets:[
+      {label:'Cobertura (%)', data:coberturas.map(c=>c*100), borderColor:'#1f3a5f', tension:.25, borderWidth:2, pointRadius:0, fill:true, backgroundColor:'#1f3a5f14'},
+      {label:'Limite 100%', data:rows.map(()=>100), borderColor:'#8a2a2a', borderDash:[4,3], borderWidth:1.5, pointRadius:0},
+    ]},
+    options:{responsive:true, plugins:{legend:{labels:{font:{family:'Inter',size:11}}}},
+      scales:{x:{grid:{color:'#f0ebdd'},ticks:{font:{family:'JetBrains Mono',size:10}}},
+              y:{grid:{color:'#f0ebdd'},ticks:{font:{family:'JetBrains Mono',size:10},callback:v=>v.toFixed(0)+'%'}}}}
+  });
+}
+
+let charts = {};
+function renderKPIs(rows, p, tirAnual){
+  const ult = rows[rows.length-1];
+  const plIni = p.capSenior+p.capMez+p.capSub;
+  const kpis = [
+    {l:'PL final', v:'R$ '+fmt(ult.PLfim)},
+    {l:'CDI acumulado', v:fmtPct(ult.cdiAcum)},
+    {l:'Razão sub mín (mez+sub)', v:fmtPct(Math.min(...rows.map(r=>r.subRatio)),1)},
+    {l:'Razão sub mín (sub pura)', v:fmtPct(Math.min(...rows.map(r=>r.subOnlyRatio)),1)},
+    {l:'Meses positivos', v:rows.filter(r=>r.resultado>0).length+' / '+rows.length},
+    {l:'TIR anual sênior', v:fmtPct(tirAnual.sr)},
+    {l:'TIR anual mezanino', v:fmtPct(tirAnual.mz)},
+    {l:'TIR anual subordinada', v:fmtPct(tirAnual.sb)},
+    {l:'Sub acum. (% CDI)', v: ult.cdiAcum>0 ? fmtPct(ult.subAcum/ult.cdiAcum, 1) : '—'},
+  ];
+  document.getElementById('kpis').innerHTML = kpis.map(k=>`<div class="card p-4"><div class="kpi-label">${k.l}</div><div class="kpi-val mt-2">${k.v}</div></div>`).join('');
+}
+
+function renderTIRtable(fluxoSr, fluxoMz, fluxoSb, tirAnual){
+  const tf = v => v!==null ? (v*100).toFixed(2)+'%' : 'n/d';
+  const sum = arr => arr.reduce((s,v)=>s+v,0);
+  const aSr=-sum(fluxoSr.filter(v=>v<0)), aMz=-sum(fluxoMz.filter(v=>v<0)), aSb=-sum(fluxoSb.filter(v=>v<0));
+  const rSr=sum(fluxoSr.filter(v=>v>0)), rMz=sum(fluxoMz.filter(v=>v>0)), rSb=sum(fluxoSb.filter(v=>v>0));
+  document.getElementById('tblTIR').innerHTML = `
+    <thead><tr><th class="label">Classe</th><th>Aportado</th><th>Recebido</th><th>MoM</th><th>TIR a.a.</th></tr></thead>
+    <tbody>
+      <tr><td class="label">Sênior</td><td>${fmt(aSr)}</td><td>${fmt(rSr)}</td><td>${aSr>0?(rSr/aSr).toFixed(2)+'x':'—'}</td><td>${tf(tirAnual.sr)}</td></tr>
+      <tr><td class="label">Mezanino</td><td>${fmt(aMz)}</td><td>${fmt(rMz)}</td><td>${aMz>0?(rMz/aMz).toFixed(2)+'x':'—'}</td><td>${tf(tirAnual.mz)}</td></tr>
+      <tr><td class="label">Subordinada</td><td>${fmt(aSb)}</td><td>${fmt(rSb)}</td><td>${aSb>0?(rSb/aSb).toFixed(2)+'x':'—'}</td><td>${tf(tirAnual.sb)}</td></tr>
+    </tbody>`;
+}
+
+function calcRentAnual(rows){
+  const years=[];
+  for (let y=0; y*12<rows.length; y++){
+    const slice = rows.slice(y*12,(y+1)*12);
+    if (!slice.length) break;
+    let fSr=1,fMz=1,fSb=1,fCdi=1;
+    slice.forEach(r=>{
+      if (r.seniorIni>0) fSr*=(1+r.rendSenior/r.seniorIni);
+      if (r.mezIni>0)    fMz*=(1+r.rendMez/r.mezIni);
+      if (r.subIni>0)    fSb*=(1+r.rendSub/r.subIni);
+      fCdi*=(1+aaToM(r.cdiAA_t));
+    });
+    years.push({ano:y+1, meses:slice.length, sr:fSr-1, mz:fMz-1, sb:fSb-1, cdi:fCdi-1});
+  }
+  return years;
+}
+function renderRentAnual(rows){
+  const years = calcRentAnual(rows);
+  const cell = (rent,cdi)=>{
+    if (rent===null||isNaN(rent)) return '<td>—</td><td>—</td><td>—</td>';
+    return `<td>${(rent*100).toFixed(2)}%</td><td>${cdi>0?((rent/cdi)*100).toFixed(1)+'%':'—'}</td><td>${((rent-cdi)*100).toFixed(2)} p.p.</td>`;
+  };
+  const head = `<thead><tr><th class="label" rowspan="2">Ano</th><th rowspan="2">Meses</th><th rowspan="2">CDI</th><th colspan="3" style="text-align:center">Sênior</th><th colspan="3" style="text-align:center">Mezanino</th><th colspan="3" style="text-align:center">Subordinada</th></tr><tr><th>Abs</th><th>% CDI</th><th>vs CDI</th><th>Abs</th><th>% CDI</th><th>vs CDI</th><th>Abs</th><th>% CDI</th><th>vs CDI</th></tr></thead>`;
+  const body = years.map(y=>`<tr><td class="label">Ano ${y.ano}</td><td>${y.meses}</td><td>${(y.cdi*100).toFixed(2)}%</td>${cell(y.sr,y.cdi)}${cell(y.mz,y.cdi)}${cell(y.sb,y.cdi)}</tr>`).join('');
+  document.getElementById('tblRentAnual').innerHTML = head + '<tbody>'+body+'</tbody>';
+}
+
+function renderCharts(rows){
+  ['pl','ativo','result','sub','rent'].forEach(k=>{if (charts[k]){ charts[k].destroy(); charts[k]=null; }});
+  const labels = rows.map(r=>'M'+r.mes);
+  const baseOpts = yFmt => ({responsive:true, plugins:{legend:{labels:{font:{family:'Inter',size:11}}}},
+    scales:{x:{grid:{color:'#f0ebdd'},ticks:{font:{family:'JetBrains Mono',size:10}}},
+            y:{grid:{color:'#f0ebdd'},ticks:{font:{family:'JetBrains Mono',size:10},callback:yFmt}}}});
+
+  charts.pl = new Chart(document.getElementById('chartPL'),{type:'line', data:{labels, datasets:[
+    {label:'PL',data:rows.map(r=>r.PLfim),borderColor:'#0c0a09',backgroundColor:'#0c0a0922',tension:.25,borderWidth:2,pointRadius:0},
+    {label:'Sênior',data:rows.map(r=>r.seniorFim),borderColor:'#1f3a5f',tension:.25,borderWidth:2,pointRadius:0},
+    {label:'Mez',data:rows.map(r=>r.mezFim),borderColor:'#a56b1f',tension:.25,borderWidth:2,pointRadius:0},
+    {label:'Sub',data:rows.map(r=>r.subFim),borderColor:'#8a2a2a',tension:.25,borderWidth:2,pointRadius:0},
+  ]}, options:baseOpts(v=>FMT.format(v))});
+
+  charts.ativo = new Chart(document.getElementById('chartAtivo'),{type:'bar', data:{labels, datasets:[
+    {label:'Caixa',data:rows.map(r=>r.caixaFim),backgroundColor:'#d4c69a'},
+    {label:'Carteira',data:rows.map(r=>r.carteiraFim),backgroundColor:'#1f3a5f'},
+  ]}, options:Object.assign(baseOpts(v=>FMT.format(v)),{scales:{x:{stacked:true,grid:{color:'#f0ebdd'}},y:{stacked:true,grid:{color:'#f0ebdd'},ticks:{callback:v=>FMT.format(v)}}}})});
+
+  charts.result = new Chart(document.getElementById('chartResult'),{type:'bar', data:{labels, datasets:[
+    {label:'Resultado',data:rows.map(r=>r.resultado), backgroundColor:rows.map(r=>r.resultado<0?'#7f1d1d':'#14532d')}
+  ]}, options:baseOpts(v=>FMT.format(v))});
+
+  charts.sub = new Chart(document.getElementById('chartSub'),{type:'line', data:{labels, datasets:[
+    {label:'(Mez+Sub) / PL',data:rows.map(r=>r.subRatio*100),borderColor:'#8a2a2a',tension:.25,borderWidth:2,pointRadius:0,fill:true,backgroundColor:'#8a2a2a14'},
+    {label:'Sub / PL',data:rows.map(r=>r.subOnlyRatio*100),borderColor:'#1f3a5f',tension:.25,borderWidth:2,pointRadius:0,borderDash:[4,3]},
+  ]}, options:baseOpts(v=>v.toFixed(1)+'%')});
+
+  charts.rent = new Chart(document.getElementById('chartRent'),{type:'line', data:{labels, datasets:[
+    {label:'Sênior',data:rows.map(r=>r.seniorAcum*100),borderColor:'#1f3a5f',tension:.25,borderWidth:2,pointRadius:0},
+    {label:'Mez',data:rows.map(r=>r.mezAcum*100),borderColor:'#a56b1f',tension:.25,borderWidth:2,pointRadius:0},
+    {label:'Sub',data:rows.map(r=>r.subAcum*100),borderColor:'#8a2a2a',tension:.25,borderWidth:2,pointRadius:0},
+    {label:'CDI',data:rows.map(r=>r.cdiAcum*100),borderColor:'#0c0a09',borderDash:[4,3],borderWidth:2,pointRadius:0},
+  ]}, options:baseOpts(v=>v.toFixed(1)+'%')});
+}
+
+/* ===================== CENÁRIOS — RESULTADOS ===================== */
+let cenariosResults = null;
+
+function runCenarios(){
+  const baseP = getInputs();
+  if (baseP.ativos.length === 0){ alert('Cadastre pelo menos um ativo.'); return; }
+  const baseRes = simulate(baseP);
+  const baseMetrics = metricsDoResultado(baseRes, baseP);
+
+  const results = [{nome:'Base', p:baseP, res:baseRes, metrics:baseMetrics, isBase:true}];
+
+  cenarioState.forEach(c=>{
+    const clone = JSON.parse(JSON.stringify(baseP));
+    aplicarAjustes(clone, c.ajustes);
+    const res = simulate(clone);
+    results.push({nome:c.nome, p:clone, res, metrics: metricsDoResultado(res, clone), isBase:false, ajustes:c.ajustes});
+  });
+
+  cenariosResults = results;
+  renderCenariosResults(results);
+}
+
+function renderCenariosResults(results){
+  const host = document.getElementById('cenarioResultados');
+  const base = results[0].metrics;
+
+  const fmtDelta = (cur, ref, isPct=true, lowerBetter=false) => {
+    if (cur===null||ref===null||isNaN(cur)||isNaN(ref)) return '—';
+    const absCur = isPct ? (cur*100).toFixed(2)+'%' : fmt(cur);
+    if (results[0].metrics === base && cur===ref) return absCur; // o próprio base
+    const diff = cur - ref;
+    if (Math.abs(diff) < 1e-9) return absCur;
+    const better = lowerBetter ? diff < 0 : diff > 0;
+    const cls = better ? 'delta-pos' : 'delta-neg';
+    const sign = diff>0 ? '+' : '';
+    const deltaStr = isPct ? (sign + (diff*100).toFixed(2) + ' p.p.') : (sign+fmt(diff));
+    return `${absCur} <span class="${cls}" style="font-size:10px">(${deltaStr})</span>`;
+  };
+
+  const rows = results.map((r,i)=>{
+    const m = r.metrics;
+    const isBase = i===0;
+    return `<tr ${isBase?'class="subtotal"':''}>
+      <td class="label">${escapeHtml(r.nome)}${isBase?' <span class="pill ok">base</span>':''}</td>
+      <td>${isBase ? (m.tirSr!==null?(m.tirSr*100).toFixed(2)+'%':'n/d') : fmtDelta(m.tirSr, base.tirSr)}</td>
+      <td>${isBase ? (m.tirMz!==null?(m.tirMz*100).toFixed(2)+'%':'n/d') : fmtDelta(m.tirMz, base.tirMz)}</td>
+      <td>${isBase ? (m.tirSb!==null?(m.tirSb*100).toFixed(2)+'%':'n/d') : fmtDelta(m.tirSb, base.tirSb)}</td>
+      <td>${isBase ? (m.seniorAc*100).toFixed(2)+'%' : fmtDelta(m.seniorAc, base.seniorAc)}</td>
+      <td>${isBase ? (m.subAc*100).toFixed(2)+'%' : fmtDelta(m.subAc, base.subAc)}</td>
+      <td>${isBase ? ((m.seniorPctCdi||0)*100).toFixed(0)+'%' : fmtDelta(m.seniorPctCdi, base.seniorPctCdi)}</td>
+      <td>${isBase ? (m.subRatioMin*100).toFixed(1)+'%' : fmtDelta(m.subRatioMin, base.subRatioMin, true, false)}</td>
+      <td>${isBase ? 'R$ '+fmt(m.plFinal) : fmtDelta(m.plFinal, base.plFinal, false)}</td>
+      <td>${m.mesesPos}/${m.mesesTotal}</td>
+      <td>${m.mesesStress===null?'—':(m.mesesStress+(m.mesesStress>0?' <span class="pill bad" style="font-size:9px">⚠</span>':''))}</td>
+    </tr>`;
+  }).join('');
+
+  host.innerHTML = `
+    <div class="card mb-6 scroll-x">
+      <table class="fin">
+        <thead><tr>
+          <th class="label">Cenário</th>
+          <th>TIR sênior</th><th>TIR mez</th><th>TIR sub</th>
+          <th>Cota sênior</th><th>Cota sub</th>
+          <th>% CDI (sr)</th>
+          <th>Razão sub mín</th>
+          <th>PL final</th>
+          <th>Meses +</th>
+          <th>Meses stress liq.</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    <div class="card p-5 mb-6">
+      <h3 class="serif text-base font-semibold mb-3">Comparativo de rentabilidade acumulada – cota sênior</h3>
+      <canvas id="chartCenariosSr" height="140"></canvas>
+    </div>
+    <div class="card p-5">
+      <h3 class="serif text-base font-semibold mb-3">Comparativo de rentabilidade acumulada – cota subordinada</h3>
+      <canvas id="chartCenariosSb" height="140"></canvas>
+    </div>
+  `;
+
+  // Charts comparativos
+  const palette = ['#0c0a09','#1f3a5f','#8a2a2a','#a56b1f','#065f46','#4c1d95','#164e63'];
+  const labels = results[0].res.rows.map(r=>'M'+r.mes);
+  const dsSr = results.map((r,i)=>({
+    label: r.nome, data: r.res.rows.map(x=>x.seniorAcum*100),
+    borderColor: palette[i%palette.length], tension:.25, borderWidth:2, pointRadius:0,
+    borderDash: r.isBase?[]:[2,2]
+  }));
+  const dsSb = results.map((r,i)=>({
+    label: r.nome, data: r.res.rows.map(x=>x.subAcum*100),
+    borderColor: palette[i%palette.length], tension:.25, borderWidth:2, pointRadius:0,
+    borderDash: r.isBase?[]:[2,2]
+  }));
+  const baseOpts = ({
+    responsive:true,
+    plugins:{legend:{labels:{font:{family:'Inter',size:11}}}},
+    scales:{x:{grid:{color:'#f0ebdd'},ticks:{font:{family:'JetBrains Mono',size:10}}},
+            y:{grid:{color:'#f0ebdd'},ticks:{font:{family:'JetBrains Mono',size:10},callback:v=>v.toFixed(1)+'%'}}}
+  });
+  if (charts.cenSr) charts.cenSr.destroy();
+  if (charts.cenSb) charts.cenSb.destroy();
+  charts.cenSr = new Chart(document.getElementById('chartCenariosSr'),{type:'line', data:{labels, datasets:dsSr}, options:baseOpts});
+  charts.cenSb = new Chart(document.getElementById('chartCenariosSb'),{type:'line', data:{labels, datasets:dsSb}, options:baseOpts});
+}
+
+/* ===================== RELATÓRIO PDF ===================== */
+function renderRelatorio(){
+  if (!lastResult){ document.getElementById('reportContent').innerHTML='<div class="report-page"><p class="muted">Rode a simulação antes de gerar o relatório.</p></div>'; return; }
+  const p = lastInputs;
+  const res = lastResult;
+  const rows = res.rows;
+  const ult = rows[rows.length-1];
+  const m = metricsDoResultado(res, p);
+  const hoje = new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'});
+
+  const ativosDesc = p.ativos.map(a=>{
+    const tipo = TIPOS_ATIVO.find(t=>t.v===a.tipo).l;
+    const taxaFmt = a.tipo==='pre' ? a.taxa.toFixed(2)+'% a.m.' : (a.taxa>=0?'+':'')+a.taxa.toFixed(2)+'% a.a.';
+    return `<div class="report-ficha-row"><div class="k">${escapeHtml(a.nome)}</div><div>${tipo} · ${taxaFmt} · ${a.peso}% · ${a.prazo}m · PDD ${a.pdd}%</div></div>`;
+  }).join('');
+
+  // DRE anual condensada
+  const years = [];
+  for (let y=0; y*12<rows.length; y++){
+    const slice = rows.slice(y*12,(y+1)*12);
+    if (!slice.length) break;
+    const sum = k => slice.reduce((s,r)=>s+r[k],0);
+    years.push({
+      ano:y+1,
+      receitaTotal: sum('receitaTotal'),
+      perdas: sum('perdasTotal'),
+      despesas: sum('despesas'),
+      resultado: sum('resultado'),
+    });
+  }
+  const dreAnualBody = years.map(y=>`
+    <tr>
+      <td class="label">Ano ${y.ano}</td>
+      <td>${fmt(y.receitaTotal)}</td>
+      <td class="neg">${fmt(y.perdas)}</td>
+      <td class="neg">${fmt(y.despesas)}</td>
+      <td class="${y.resultado<0?'neg':'pos'}" style="font-weight:600">${fmtSign(y.resultado)}</td>
+    </tr>`).join('');
+
+  const tirFmt = v => v!==null ? (v*100).toFixed(2)+'%' : 'n/d';
+
+  // Cenários no relatório (se rodados)
+  let cenariosHtml = '';
+  if (cenariosResults && cenariosResults.length > 1){
+    const base = cenariosResults[0].metrics;
+    const rowsCen = cenariosResults.map((r,i)=>{
+      const mm = r.metrics;
+      const df = (cur, ref) => cur!==null && ref!==null ? ((cur-ref)*100).toFixed(2)+' p.p.' : '—';
+      return `<tr ${i===0?'class="subtotal"':''}>
+        <td class="label">${escapeHtml(r.nome)}</td>
+        <td>${tirFmt(mm.tirSr)}</td>
+        <td>${tirFmt(mm.tirSb)}</td>
+        <td>${(mm.subRatioMin*100).toFixed(1)}%</td>
+        <td>R$ ${fmt(mm.plFinal)}</td>
+        <td>${mm.mesesPos}/${mm.mesesTotal}</td>
+      </tr>`;
+    }).join('');
+    cenariosHtml = `
+      <div class="report-page">
+        <div class="eyebrow">Análise de sensibilidade</div>
+        <h2>Cenários &amp; stress test</h2>
+        <p class="text-sm mt-2" style="margin-bottom:20px">Resultados comparativos dos cenários de stress aplicados sobre o caso base.</p>
+        <table class="fin">
+          <thead><tr>
+            <th class="label">Cenário</th>
+            <th>TIR sênior</th>
+            <th>TIR sub</th>
+            <th>Razão sub mín</th>
+            <th>PL final</th>
+            <th>Meses +</th>
+          </tr></thead>
+          <tbody>${rowsCen}</tbody>
+        </table>
+        <div style="margin-top:20px;font-size:11px;color:var(--muted)">
+          <strong>Ajustes por cenário:</strong><br>
+          ${cenariosResults.slice(1).map(r=>{
+            const ajs = r.ajustes.map(a=>{
+              const def = VARS_STRESS.find(v=>v.v===a.var);
+              return (def?.l||a.var)+' = '+a.valor;
+            }).join('; ');
+            return `<strong>${escapeHtml(r.nome)}:</strong> ${ajs||'(sem ajustes)'}`;
+          }).join('<br>')}
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('reportContent').innerHTML = `
+    <!-- CAPA -->
+    <div class="report-page" style="display:flex;flex-direction:column;justify-content:space-between">
+      <div>
+        <div class="eyebrow">Estudo de viabilidade</div>
+        <h1 style="margin-top:16px">${escapeHtml(p.nomeFundo)}</h1>
+        <p class="muted" style="margin-top:8px;font-size:13px">Relatório confidencial · ${hoje}</p>
+      </div>
+      <div style="margin-top:60px">
+        <h3 style="margin-bottom:14px">Ficha do fundo</h3>
+        <div class="report-ficha-row"><div class="k">Gestor</div><div>${escapeHtml(p.gestor||'—')}</div></div>
+        <div class="report-ficha-row"><div class="k">Administrador</div><div>${escapeHtml(p.administrador||'—')}</div></div>
+        <div class="report-ficha-row"><div class="k">Tipo</div><div>${p.tipoFundo==='aberto'?'Fundo aberto · D+'+p.liquidezDias:'Fundo fechado'}</div></div>
+        <div class="report-ficha-row"><div class="k">Horizonte</div><div>${p.prazoMeses} meses</div></div>
+        <div class="report-ficha-row"><div class="k">Captação inicial</div><div>R$ ${fmt(p.capSenior+p.capMez+p.capSub)} (sr ${fmt(p.capSenior)} / mz ${fmt(p.capMez)} / sb ${fmt(p.capSub)})</div></div>
+        <div class="report-ficha-row"><div class="k">Remuneração sênior</div><div>CDI + ${p.spreadSenior.toFixed(2)}% a.a.</div></div>
+        <div class="report-ficha-row"><div class="k">Remuneração mezanino</div><div>CDI + ${p.spreadMez.toFixed(2)}% a.a.</div></div>
+        <div class="report-ficha-row"><div class="k">CDI curva</div><div>${p.cdiAno1}% → ${p.cdiAno2}% → ${p.cdiAno3}% → ${p.cdiTerminal}%</div></div>
+        <div class="report-ficha-row"><div class="k">Originação</div><div>R$ ${fmt(p.originacaoMensal)}/mês</div></div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);border-top:1px solid var(--rule);padding-top:8px">
+        Este relatório é produto de uma simulação em modelo simplificado. As projeções são indicativas e não constituem oferta ou recomendação de investimento.
+      </div>
+    </div>
+
+    <!-- PÁGINA 2: KPIs + FICHA -->
+    <div class="report-page">
+      <div class="eyebrow">Resumo executivo</div>
+      <h2>Resultados da projeção</h2>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:24px">
+        <div class="report-kpi"><div class="label">PL final</div><div class="value">R$ ${fmt(m.plFinal)}</div></div>
+        <div class="report-kpi"><div class="label">Retorno PL</div><div class="value">${(m.retornoPL*100).toFixed(2)}%</div></div>
+        <div class="report-kpi"><div class="label">CDI acumulado</div><div class="value">${(m.cdiAc*100).toFixed(2)}%</div></div>
+        <div class="report-kpi"><div class="label">Meses positivos</div><div class="value">${m.mesesPos}/${m.mesesTotal}</div></div>
+        <div class="report-kpi"><div class="label">TIR sênior</div><div class="value">${tirFmt(m.tirSr)}</div></div>
+        <div class="report-kpi"><div class="label">TIR mezanino</div><div class="value">${tirFmt(m.tirMz)}</div></div>
+        <div class="report-kpi"><div class="label">TIR subordinada</div><div class="value">${tirFmt(m.tirSb)}</div></div>
+        <div class="report-kpi"><div class="label">Razão sub mínima</div><div class="value">${(m.subRatioMin*100).toFixed(1)}%</div></div>
+      </div>
+
+      <h3>Composição da carteira</h3>
+      ${ativosDesc}
+
+      <div style="margin-top:24px"><h3>Gráfico: evolução do PL</h3></div>
+      <canvas id="reportChartPL" height="140"></canvas>
+    </div>
+
+    <!-- PÁGINA 3: Gráficos -->
+    <div class="report-page">
+      <div class="eyebrow">Visualização</div>
+      <h2>Rentabilidade &amp; estrutura</h2>
+      <h3 style="margin-top:16px">Rentabilidade acumulada por classe vs CDI</h3>
+      <canvas id="reportChartRent" height="140"></canvas>
+      <h3 style="margin-top:24px">Razão de subordinação ao longo do tempo</h3>
+      <canvas id="reportChartSub" height="140"></canvas>
+    </div>
+
+    <!-- PÁGINA 4: DRE anual + TIR -->
+    <div class="report-page">
+      <div class="eyebrow">Demonstrativos</div>
+      <h2>DRE consolidada anual</h2>
+      <table class="fin">
+        <thead><tr><th class="label">Período</th><th>Receita total</th><th>Perdas</th><th>Despesas</th><th>Resultado</th></tr></thead>
+        <tbody>${dreAnualBody}</tbody>
+      </table>
+
+      <h2 style="margin-top:36px">TIR realizada por classe</h2>
+      <table class="fin">
+        <thead><tr><th class="label">Classe</th><th>Aportado</th><th>Recebido</th><th>MoM</th><th>TIR a.a.</th></tr></thead>
+        <tbody>
+          <tr><td class="label">Sênior</td><td>${fmt(-res.fluxoSr.filter(v=>v<0).reduce((s,v)=>s+v,0))}</td><td>${fmt(res.fluxoSr.filter(v=>v>0).reduce((s,v)=>s+v,0))}</td><td>${res.fluxoSr.filter(v=>v<0).length?(res.fluxoSr.filter(v=>v>0).reduce((s,v)=>s+v,0)/-res.fluxoSr.filter(v=>v<0).reduce((s,v)=>s+v,0)).toFixed(2)+'x':'—'}</td><td>${tirFmt(res.tirAnual.sr)}</td></tr>
+          <tr><td class="label">Mezanino</td><td>${fmt(-res.fluxoMz.filter(v=>v<0).reduce((s,v)=>s+v,0))}</td><td>${fmt(res.fluxoMz.filter(v=>v>0).reduce((s,v)=>s+v,0))}</td><td>${res.fluxoMz.filter(v=>v<0).length?(res.fluxoMz.filter(v=>v>0).reduce((s,v)=>s+v,0)/-res.fluxoMz.filter(v=>v<0).reduce((s,v)=>s+v,0)).toFixed(2)+'x':'—'}</td><td>${tirFmt(res.tirAnual.mz)}</td></tr>
+          <tr><td class="label">Subordinada</td><td>${fmt(-res.fluxoSb.filter(v=>v<0).reduce((s,v)=>s+v,0))}</td><td>${fmt(res.fluxoSb.filter(v=>v>0).reduce((s,v)=>s+v,0))}</td><td>${res.fluxoSb.filter(v=>v<0).length?(res.fluxoSb.filter(v=>v>0).reduce((s,v)=>s+v,0)/-res.fluxoSb.filter(v=>v<0).reduce((s,v)=>s+v,0)).toFixed(2)+'x':'—'}</td><td>${tirFmt(res.tirAnual.sb)}</td></tr>
+        </tbody>
+      </table>
+
+      ${p.tipoFundo==='aberto' ? `
+      <h2 style="margin-top:36px">Indicadores de liquidez</h2>
+      <table class="fin">
+        <thead><tr><th class="label">Métrica</th><th>Valor</th></tr></thead>
+        <tbody>
+          <tr><td class="label">Janela de resgate</td><td>D+${p.liquidezDias}</td></tr>
+          <tr><td class="label">Cobertura sênior — mínima</td><td>${m.coberturaMin!==null && isFinite(m.coberturaMin) ? (m.coberturaMin*100).toFixed(1)+'%' : '—'}</td></tr>
+          <tr><td class="label">Meses com cobertura &lt; 100%</td><td>${m.mesesStress!==null ? m.mesesStress : '—'}</td></tr>
+          <tr><td class="label">Duration média da carteira</td><td>${(rows.reduce((s,r)=>s+r.prazoPonderado,0)/rows.length).toFixed(1)} meses</td></tr>
+        </tbody>
+      </table>` : ''}
+    </div>
+
+    ${cenariosHtml}
+  `;
+
+  // Renderiza gráficos do relatório
+  setTimeout(()=>{
+    const labels = rows.map(r=>'M'+r.mes);
+    const opts = ({responsive:true, animation:false, plugins:{legend:{labels:{font:{family:'Inter',size:10}}}},
+      scales:{x:{grid:{color:'#f0ebdd'},ticks:{font:{size:9}}},y:{grid:{color:'#f0ebdd'},ticks:{font:{size:9}}}}});
+    ['reportPL','reportRent','reportSub'].forEach(k=>{ if (charts[k]){ charts[k].destroy(); charts[k]=null; } });
+    const c1 = document.getElementById('reportChartPL');
+    if (c1) charts.reportPL = new Chart(c1,{type:'line',data:{labels, datasets:[
+      {label:'PL',data:rows.map(r=>r.PLfim),borderColor:'#0c0a09',tension:.25,borderWidth:2,pointRadius:0},
+      {label:'Sênior',data:rows.map(r=>r.seniorFim),borderColor:'#1f3a5f',tension:.25,borderWidth:2,pointRadius:0},
+      {label:'Mez',data:rows.map(r=>r.mezFim),borderColor:'#a56b1f',tension:.25,borderWidth:2,pointRadius:0},
+      {label:'Sub',data:rows.map(r=>r.subFim),borderColor:'#8a2a2a',tension:.25,borderWidth:2,pointRadius:0},
+    ]},options:Object.assign({},opts,{scales:{x:opts.scales.x,y:{...opts.scales.y,ticks:{font:{size:9},callback:v=>FMT.format(v)}}}})});
+
+    const c2 = document.getElementById('reportChartRent');
+    if (c2) charts.reportRent = new Chart(c2,{type:'line',data:{labels, datasets:[
+      {label:'Sênior',data:rows.map(r=>r.seniorAcum*100),borderColor:'#1f3a5f',tension:.25,borderWidth:2,pointRadius:0},
+      {label:'Mez',data:rows.map(r=>r.mezAcum*100),borderColor:'#a56b1f',tension:.25,borderWidth:2,pointRadius:0},
+      {label:'Sub',data:rows.map(r=>r.subAcum*100),borderColor:'#8a2a2a',tension:.25,borderWidth:2,pointRadius:0},
+      {label:'CDI',data:rows.map(r=>r.cdiAcum*100),borderColor:'#0c0a09',borderDash:[4,3],borderWidth:2,pointRadius:0},
+    ]},options:Object.assign({},opts,{scales:{x:opts.scales.x,y:{...opts.scales.y,ticks:{font:{size:9},callback:v=>v.toFixed(1)+'%'}}}})});
+
+    const c3 = document.getElementById('reportChartSub');
+    if (c3) charts.reportSub = new Chart(c3,{type:'line',data:{labels, datasets:[
+      {label:'Razão sub',data:rows.map(r=>r.subRatio*100),borderColor:'#8a2a2a',tension:.25,borderWidth:2,pointRadius:0,fill:true,backgroundColor:'#8a2a2a14'},
+    ]},options:Object.assign({},opts,{scales:{x:opts.scales.x,y:{...opts.scales.y,ticks:{font:{size:9},callback:v=>v.toFixed(1)+'%'}}}})});
+  }, 50);
+}
+
+/* ===================== ORQUESTRAÇÃO ===================== */
+let lastResult = null, lastInputs = null;
+
+function runSimulation(){
+  const p = getInputs();
+  if (p.ativos.length === 0){ alert('Cadastre pelo menos um ativo.'); return; }
+  const somaPesos = p.ativos.reduce((s,a)=>s+(a.peso||0),0);
+  if (Math.abs(somaPesos-100) > 0.01){
+    if (!confirm('Soma dos pesos = '+somaPesos.toFixed(1)+'%. Continuar?')) return;
+  }
+  const res = simulate(p);
+  lastResult = res; lastInputs = p;
+  renderRodagem(res.rows);
+  renderDRE(res.rows, p);
+  renderFC(res.rows, p);
+  renderBP(res.rows);
+  renderLiquidez(res.rows, p);
+  renderKPIs(res.rows, p, res.tirAnual);
+  renderCharts(res.rows);
+  renderTIRtable(res.fluxoSr, res.fluxoMz, res.fluxoSb, res.tirAnual);
+  renderRentAnual(res.rows);
+
+  document.getElementById('runStamp').textContent = 'Última rodagem: ' + new Date().toLocaleString('pt-BR');
+  const total = p.capSenior+p.capMez+p.capSub;
+  document.getElementById('relSub').textContent = total>0 ? ((p.capMez+p.capSub)/total*100).toFixed(1)+'%' : '—';
+  const partes = [p.nomeFundo];
+  if (p.gestor) partes.push('Gestor: '+p.gestor);
+  if (p.administrador) partes.push('Administrador: '+p.administrador);
+  partes.push(p.tipoFundo==='aberto' ? `Aberto · D+${p.liquidezDias}` : 'Fechado');
+  document.getElementById('ficha').textContent = partes.join(' · ');
+
+  if (document.querySelector('.tab.tab-active').dataset.tab === 'premissas') switchTab('rodagem');
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('tab-active', b.dataset.tab===name));
+  ['premissas','rodagem','dre','fc','bp','liquidez','graficos','cenarios','relatorio'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('hidden-tab', t!==name);
+  });
+  if (lastResult){
+    if (name==='graficos') renderCharts(lastResult.rows);
+    if (name==='liquidez') renderLiquidez(lastResult.rows, lastInputs);
+    if (name==='relatorio') renderRelatorio();
+  }
+}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+document.getElementById('btnRun').addEventListener('click',runSimulation);
+
+/* ===== EXPORT / IMPORT como arquivo ===== */
+function buildExportObject(){
+  const p = getInputs();
+  return {
+    version: '0.6',
+    exportedAt: new Date().toISOString(),
+    premissas: p,
+    cenarios: cenarioState.map(c=>({...c, ajustes: c.ajustes.map(a=>({...a}))})),
+  };
+}
+document.getElementById('btnExport').addEventListener('click',()=>{
+  const obj = buildExportObject();
+  const blob = new Blob([JSON.stringify(obj, null, 2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const nome = (obj.premissas.nomeFundo || 'fidc').replace(/[^a-z0-9]/gi,'_');
+  const data = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `${nome}_${data}.fidc.json`; a.click();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('btnImport').addEventListener('click',()=>{
+  document.getElementById('fileImport').click();
+});
+document.getElementById('fileImport').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try {
+      const obj = JSON.parse(ev.target.result);
+      if (!obj.premissas){ alert('Arquivo inválido.'); return; }
+      setInputs(obj.premissas);
+      if (Array.isArray(obj.cenarios)){
+        cenarioState = obj.cenarios.map(c=>({...c, ajustes: (c.ajustes||[]).map(a=>({...a}))}));
+        renderCenarioList();
+      }
+      alert('Análise importada com sucesso. Clique em Rodar.');
+    } catch(err){
+      alert('Erro ao ler arquivo: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+document.getElementById('btnCsv').addEventListener('click',()=>{
+  if (!lastResult){ alert('Rode antes.'); return; }
+  const rows = lastResult.rows;
+  const skip = new Set(['detalheAtivo','despCustomDetalhe']);
+  const baseKeys = Object.keys(rows[0]).filter(k=>!skip.has(k));
+  const csv = [baseKeys.join(';'), ...rows.map(r=>baseKeys.map(k=>r[k]).join(';'))].join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = (lastInputs?.nomeFundo||'fidc')+'_rodagem.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+function resetDefaults(){
+  const defs = {
+    nomeFundo:'FIDC Exemplo I', gestor:'', administrador:'',
+    prazoMeses:36, reservaMinima:5, tipoFundo:'aberto', liquidezDias:30,
+    capSenior:70000000, capMez:15000000, capSub:15000000,
+    rampOn:'0', rampClasse:'senior', rampTeto:30000000, rampTetoMes:10000000,
+    recompOn:'1', recompRazao:'mez_sub', recompVia:'sub', recompGatilho:25, recompTarget:30, recompTetoMes:5000000, recompTetoAcum:30000000,
+    wfOn:'0', wfColchao:15, wfOrdem:'sr_mz_sb',
+    desubOn:'1', desubGatilho:35, desubTarget:30, desubTetoMes:5000000,
+    cdiAno1:11.75, cdiAno2:10.5, cdiAno3:10, cdiTerminal:10,
+    ipcaAno1:4.5, ipcaAno2:4.0, ipcaAno3:3.5, ipcaTerminal:3.5,
+    spreadSenior:3, spreadMez:6, caixaCdiPct:100,
+    originacaoMensal:25000000, tetoCarteira:0, origMes1:0, origRampMeses:0,
+    perfOn:'1', perfPct:20, perfBenchTipo:'pct_cdi', perfBench:100, perfBase:'excedente_pl',
+    taxaAdmAA:0.5, minAdmMes:10000, taxaGestaoAA:0.8, minGestaoMes:15000,
+    taxaCustodiaAA:0.15, auditoriaMensal:8000, outrasDespMes:5000, despEstruturacao:150000
+  };
+  Object.keys(defs).forEach(k=>{ const el=document.getElementById(k); if(el) el.value=defs[k]; });
+  despCustomState=[]; ativoState=[]; captacaoState=[]; amortState=[];
+  addAtivo({nome:'Duplicatas pré',  tipo:'pre',  taxa:2.5, peso:60, prazo:5, pdd:0.8, pddMode:'carteira'});
+  addAtivo({nome:'Recebíveis CDI+', tipo:'cdi',  taxa:6,   peso:40, prazo:8, pdd:0.5, pddMode:'carteira'});
+  renderDespCustomList(); renderCaptacaoList(); renderAmortList();
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  addAtivo({nome:'Duplicatas pré',  tipo:'pre',  taxa:2.5, peso:60, prazo:5, pdd:0.8, pddMode:'carteira'});
+  addAtivo({nome:'Recebíveis CDI+', tipo:'cdi',  taxa:6,   peso:40, prazo:8, pdd:0.5, pddMode:'carteira'});
+  renderDespCustomList(); renderCaptacaoList(); renderAmortList(); renderCenarioList();
+  runSimulation();
+  switchTab('premissas');
+});
+</script>
+</body>
+</html>
