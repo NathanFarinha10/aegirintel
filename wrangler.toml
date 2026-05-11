@@ -1,0 +1,11 @@
+name = "aegirintel"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+[assets]
+directory = "./public"
+
+# KV namespace for shared data
+[[kv_namespaces]]
+binding = "AEGIR_KV"
+id = "PLACEHOLDER_ID"
