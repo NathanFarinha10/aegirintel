@@ -8,4 +8,4 @@ directory = "./public"
 # KV namespace for shared data
 [[kv_namespaces]]
 binding = "AEGIR_KV"
-id = "PLACEHOLDER_ID"
+id = "96ca200638984c25b50a733435c86602"
