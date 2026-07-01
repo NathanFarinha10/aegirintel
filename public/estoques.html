@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aegir·Intel — Gestão de Estoques</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- Config inline - uses Aegir Intel Supabase -->
+<style>
+:root{
+  --paper:#F6F5F1; --card:#FFFFFF; --ink:#19231F; --ink-2:#54625B; --line:#E2E0D8;
+  --green:#155446; --green-soft:#E3EEE9; --gold:#B9892F; --gold-soft:#F6EEDB;
+  --red:#B3402E; --red-soft:#F7E4E0; --blue:#2D5C8A; --blue-soft:#E3ECF5;
+  --side:#10211B; --side-ink:#C9D6CF;
+  --r:10px; --shadow:0 1px 2px rgba(25,35,31,.06), 0 4px 14px rgba(25,35,31,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--paper);color:var(--ink);font-size:14px;display:flex}
+h1,h2,h3,.brand{font-family:'Archivo',sans-serif}
+
+aside{width:228px;min-height:100vh;background:var(--side);color:var(--side-ink);padding:22px 14px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;position:sticky;top:0;height:100vh}
+.brand{color:#fff;font-weight:800;font-size:17px;letter-spacing:.3px;padding:0 10px 6px}
+.brand small{display:block;font-family:'IBM Plex Mono',monospace;font-weight:400;font-size:10px;color:#7E978C;letter-spacing:1.6px;text-transform:uppercase;margin-top:3px}
+.navsec{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#5F7A6E;padding:16px 10px 6px}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;color:var(--side-ink);font:inherit;font-weight:500;padding:9px 10px;border-radius:8px;cursor:pointer}
+.nav-btn:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-btn.active{background:var(--green);color:#fff}
+.nav-btn svg{width:16px;height:16px;flex-shrink:0}
+.side-foot{margin-top:auto;font-size:11px;color:#5F7A6E;padding:10px;border-top:1px solid rgba(255,255,255,.08)}
+.sync{display:flex;align-items:center;gap:7px;font-size:11px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.05);margin-top:10px}
+.sync .dot{width:8px;height:8px;border-radius:99px;background:#9AA6A0;flex-shrink:0}
+.sync.on .dot{background:#4CC38A}
+.sync.err .dot{background:#E5484D}
+
+main{flex:1;min-width:0;padding:26px 30px 60px;max-width:1340px}
+.topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.topbar h1{font-size:22px;font-weight:700}
+.topbar .sub{color:var(--ink-2);margin-top:3px;font-size:13px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+select,input,textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+select:focus,input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+input[readonly]{background:#F3F1EA;color:var(--ink-2)}
+.btn{font:inherit;font-weight:600;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+.btn:hover{border-color:var(--green);color:var(--green)}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+.btn.primary:hover{background:#0F4338;color:#fff}
+.btn.danger{color:var(--red)}
+.btn.danger:hover{border-color:var(--red)}
+.btn.sm{padding:4px 10px;font-size:12px}
+.btn[disabled]{opacity:.5;cursor:wait}
+
+.banner{background:var(--gold-soft);border:1px solid #E4D2A4;color:#6E5217;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px;display:none}
+.banner.show{display:block}
+
+.view{display:none}.view.active{display:block}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(178px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+.kpi .lbl{font-size:11px;letter-spacing:1.1px;text-transform:uppercase;color:var(--ink-2)}
+.kpi .val{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;margin-top:6px}
+.kpi .delta{font-size:12px;margin-top:4px;color:var(--ink-2)}
+.card h3{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.card h3 .hint{font-weight:400;font-size:11px;color:var(--ink-2)}
+.charts2{grid-template-columns:1.4fr 1fr}
+.charts3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:1100px){.charts2,.charts3{grid-template-columns:1fr}}
+.chartbox{position:relative;height:250px}
+
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:#fff;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:980px}
+table.compact{min-width:640px}
+th{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-2);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:#FBFAF7;position:sticky;top:0;white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid #F0EEE7;white-space:nowrap;vertical-align:middle}
+tr:hover td{background:#FAF9F4}
+td.mono,th.r{font-family:'IBM Plex Mono',monospace}
+td.r,th.r{text-align:right}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px}
+.b-disp{background:var(--green-soft);color:var(--green)}
+.b-res{background:var(--gold-soft);color:#8A6418}
+.b-neg{background:var(--blue-soft);color:var(--blue)}
+.b-vend{background:#19231F;color:#fff}
+.b-dist{background:var(--red-soft);color:var(--red)}
+.b-bloq{background:#ECEAE3;color:var(--ink-2)}
+.link{background:none;border:0;color:var(--green);font:inherit;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+.link.danger{color:var(--red)}
+
+.kanban{display:grid;grid-template-columns:repeat(6,minmax(190px,1fr));gap:12px;overflow-x:auto;align-items:start}
+.kcol{background:#EFEDE6;border:1px solid var(--line);border-radius:var(--r);padding:10px;min-height:140px}
+.kcol h4{font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-2);display:flex;justify-content:space-between;margin-bottom:10px}
+.kcol h4 .cnt{font-family:'IBM Plex Mono',monospace;background:#fff;border:1px solid var(--line);border-radius:6px;padding:0 6px}
+.kcard{background:#fff;border:1px solid var(--line);border-left:3px solid var(--green);border-radius:8px;padding:10px;margin-bottom:8px;box-shadow:var(--shadow);font-size:12.5px}
+.kcard .t{font-weight:600;font-size:13px}
+.kcard .m{color:var(--ink-2);margin-top:2px}
+.kcard .v{font-family:'IBM Plex Mono',monospace;font-weight:600;margin-top:6px}
+.kcard .acts{display:flex;gap:6px;margin-top:8px}
+
+dialog{border:0;border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.3);width:min(880px,94vw);padding:0}
+dialog.narrow{width:min(520px,94vw)}
+dialog::backdrop{background:rgba(16,33,27,.55)}
+.mhead{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+.mhead h2{font-size:17px}
+.mbody{padding:20px 22px;max-height:70vh;overflow:auto}
+.mfoot{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.fgrid.two{grid-template-columns:repeat(2,1fr)}
+@media(max-width:760px){.fgrid,.fgrid.two{grid-template-columns:1fr}}
+.field label{display:block;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-2);margin-bottom:5px}
+.field input,.field select{width:100%}
+fieldset{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:16px}
+legend{font-family:'Archivo';font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--green);padding:0 6px}
+.subnote{font-size:12px;color:var(--ink-2);margin-bottom:10px;line-height:1.5}
+
+/* editor de linhas dinâmicas (fluxo de parcelas / custos) */
+.rowed{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.rowed .row{display:grid;grid-template-columns:1fr 1fr 36px;gap:8px;align-items:center}
+.rowed .row.c3{grid-template-columns:1.4fr 1fr 36px}
+.rowed .row.c2{grid-template-columns:1fr 36px}
+.rowed .rm{border:1px solid var(--line);background:#fff;border-radius:8px;height:36px;cursor:pointer;color:var(--red);font-weight:700}
+.rowed .rm:hover{border-color:var(--red)}
+.rowtotal{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-2);text-align:right;margin-top:6px}
+@media(max-width:900px){aside{display:none}main{padding:18px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="brand">Gestão de Estoques<small>Asset Management</small></div>
+  <div class="navsec">Operação</div>
+  <button class="nav-btn active" data-view="dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</button>
+  <button class="nav-btn" data-view="estoque"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Estoque de Imóveis</button>
+  <button class="nav-btn" data-view="pipeline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16l-6 8v6l-4 2v-8z"/></svg>Pipeline Comercial</button>
+  <div class="navsec">Administração</div>
+  <button class="nav-btn" data-view="fundos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M4 10h16M6 10V7l6-4 6 4v3M7 14v4M12 14v4M17 14v4"/></svg>Fundos</button>
+  <div class="sync" id="sync"><span class="dot"></span><span id="sync-txt">Modo local (sem banco)</span></div>
+  <div class="side-foot">v1.5 · multiusuário<br>Cloudflare Pages + Supabase</div>
+</aside>
+
+<main>
+<div class="banner" id="banner"></div>
+
+<!-- ============ DASHBOARD ============ -->
+<section class="view active" id="view-dash">
+  <div class="topbar">
+    <div><h1>Dashboard</h1><div class="sub">Visão consolidada do portfólio · <span id="dash-date"></span></div></div>
+    <div class="toolbar"><select id="f-fundo-dash"></select></div>
+  </div>
+  <div class="grid kpis" id="kpi-estoque"></div>
+  <div style="height:14px"></div>
+  <div class="grid kpis" id="kpi-fin"></div>
+  <div style="height:14px"></div>
+  <div class="grid charts2">
+    <div class="card"><h3>Receita realizada × projetada <span class="hint">últimos 12 meses, R$ mil</span></h3><div class="chartbox"><canvas id="ch-receita"></canvas></div></div>
+    <div class="card"><h3>Estoque por status</h3><div class="chartbox"><canvas id="ch-status"></canvas></div></div>
+  </div>
+  <div style="height:14px"></div>
+  <div class="grid charts3">
+    <div class="card"><h3>Conversão de propostas <span class="hint">funil</span></h3><div class="chartbox"><canvas id="ch-funil"></canvas></div></div>
+    <div class="card"><h3>Ranking de empreendimentos <span class="hint">VGV vendido, R$ mil</span></h3><div class="chartbox"><canvas id="ch-emp"></canvas></div></div>
+    <div class="card"><h3>Ranking de corretores <span class="hint">vendas fechadas</span></h3><div class="chartbox"><canvas id="ch-corr"></canvas></div></div>
+  </div>
+  <div style="height:14px"></div>
+  <div class="grid kpis" id="kpi-com"></div>
+</section>
+
+<!-- ============ ESTOQUE ============ -->
+<section class="view" id="view-estoque">
+  <div class="topbar">
+    <div><h1>Estoque de Imóveis</h1><div class="sub">Cadastro manual, posição financeira e situação comercial por unidade</div></div>
+    <div class="toolbar">
+      <input id="f-busca" type="search" placeholder="Buscar imóvel, AP, empreendimento…">
+      <select id="f-status"><option value="">Status: todos</option></select>
+      <select id="f-emp"><option value="">Empreendimento: todos</option></select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2);white-space:nowrap"><input type="checkbox" id="f-ocultar-vendidos" style="width:auto;padding:0"> Ocultar vendidos</label>
+      <button class="btn primary" id="btn-novo">+ Cadastrar imóvel</button>
+    </div>
+  </div>
+  <div class="tablewrap"><table id="tb-imoveis">
+    <thead><tr>
+      <th>Código</th><th>Imóvel</th><th>AP</th><th>Empreendimento</th><th>Status</th>
+      <th class="r">UN/Custo</th><th class="r">Proposta de Venda</th><th class="r">Custos</th><th class="r">Vlr. Líquido Fundo</th>
+      <th class="r">Exced./Quota</th><th class="r">Excedente R$</th><th class="r">ROI</th><th>Desligamento</th><th>Ações</th>
+    </tr></thead><tbody></tbody>
+  </table></div>
+</section>
+
+<!-- ============ PIPELINE ============ -->
+<section class="view" id="view-pipeline">
+  <div class="topbar">
+    <div><h1>Pipeline Comercial</h1><div class="sub">Propostas por etapa — um imóvel pode ter múltiplas propostas ativas</div></div>
+    <div class="toolbar"><button class="btn primary" id="btn-nova-prop">+ Nova proposta</button></div>
+  </div>
+  <div class="kanban" id="kanban"></div>
+  <div style="height:18px"></div>
+  <div class="card"><h3>Controle de propostas <span class="hint">visão tabular</span></h3>
+    <div class="tablewrap" style="box-shadow:none;border:0"><table id="tb-prop">
+      <thead><tr><th>Imóvel</th><th>Cliente</th><th>Corretor</th><th>Data</th><th class="r">Valor ofertado</th><th>Pagamento</th><th class="r">Entrada</th><th class="r">Parcelas</th><th>Etapa</th><th></th></tr></thead>
+      <tbody></tbody></table></div>
+  </div>
+</section>
+
+<!-- ============ FUNDOS ============ -->
+<section class="view" id="view-fundos">
+  <div class="topbar">
+    <div><h1>Fundos</h1><div class="sub">Dados básicos dos fundos — o número de quotas é a base do cálculo de excedente por quota</div></div>
+    <div class="toolbar"><button class="btn primary" id="btn-novo-fundo">+ Cadastrar fundo</button></div>
+  </div>
+  <div class="tablewrap"><table class="compact" id="tb-fundos">
+    <thead><tr><th>Fundo</th><th>CNPJ</th><th class="r">Nº de quotas</th><th class="r">Imóveis vinculados</th><th class="r">Excedente total (R$)</th><th class="r">Excedente / quota</th><th>Ações</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+</section>
+</main>
+
+<!-- ============ MODAL IMÓVEL ============ -->
+<dialog id="dlg-imovel">
+  <form method="dialog" id="frm-imovel">
+    <div class="mhead"><h2 id="dlg-title">Cadastrar imóvel</h2><div style="display:flex;align-items:center;gap:10px"><span id="draft-status" style="font-size:12px;color:var(--ink-2)"></span><button class="btn sm" value="cancel" type="submit" formnovalidate>Fechar ✕</button></div></div>
+    <div class="mbody">
+      <fieldset><legend>Identificação</legend><div class="fgrid">
+        <div class="field"><label>Código interno</label><input name="codigo" required placeholder="IMV-000"></div>
+        <div class="field"><label>Imóvel</label><select name="tipo" required><option>Apartamento</option><option>Sala comercial</option><option>Loja</option><option>Casa</option><option>Galpão</option><option>Terreno</option></select></div>
+        <div class="field"><label>AP / Unidade</label><input name="ap" placeholder="1203"></div>
+        <div class="field"><label>Torre / Bloco</label><input name="torre" list="dl-torres" placeholder="Torre A"></div>
+        <div class="field"><label>Empreendimento</label><input name="empreendimento" list="dl-emps" required></div>
+        <div class="field"><label>Fundo</label><select name="fundoId" id="sel-fundo"></select></div>
+      </div></fieldset>
+      <fieldset><legend>Localização e registro</legend><div class="fgrid">
+        <div class="field"><label>Endereço</label><input name="endereco"></div>
+        <div class="field"><label>Cidade</label><input name="cidade"></div>
+        <div class="field"><label>Estado (UF)</label><input name="uf" maxlength="2"></div>
+        <div class="field"><label>CEP</label><input name="cep"></div>
+        <div class="field"><label>Cartório</label><input name="cartorio"></div>
+        <div class="field"><label>Área total (m²)</label><input name="areaTotal" type="number" step="0.01"></div>
+      </div></fieldset>
+      <fieldset><legend>Vagas de garagem e escaninhos</legend>
+        <div class="subnote">Vincule quantas vagas e escaninhos o imóvel possuir, identificando cada um (ex.: G2-15, ESC-07).</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div><div style="font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-2);margin-bottom:6px">Garagens</div>
+            <div class="rowed" id="rows-garagens"></div>
+            <button type="button" class="btn sm" id="add-garagem">+ Adicionar vaga</button></div>
+          <div><div style="font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-2);margin-bottom:6px">Escaninhos</div>
+            <div class="rowed" id="rows-escaninhos"></div>
+            <button type="button" class="btn sm" id="add-escaninho">+ Adicionar escaninho</button></div>
+        </div>
+      </fieldset>
+      <fieldset><legend>Documentação e restrições</legend><div class="fgrid">
+        <div class="field"><label>Matrícula atualizada?</label><select name="matriculaAtualizada"><option value="">—</option><option>Sim</option><option>Não</option></select></div>
+        <div class="field"><label>Número da matrícula</label><input name="matricula"></div>
+        <div class="field"><label>Atualização da matrícula</label><input name="matriculaData" type="date"></div>
+        <div class="field"><label>Certidão de ônus?</label><select name="certidaoOnus"><option value="">—</option><option>Sim</option><option>Não</option></select></div>
+        <div class="field"><label>Atualização da certidão</label><input name="certidaoOnusData" type="date"></div>
+        <div class="field"><label>Indisponibilidade?</label><select name="indisponivel" id="sel-indisp"><option value="">—</option><option>Sim</option><option>Não</option></select></div>
+        <div class="field" style="grid-column:1/-1"><label>Descrição da restrição</label><input name="indisponibilidadeDesc" id="inp-indisp-desc" placeholder="ex.: penhora judicial, bloqueio CNIB, inventário…"></div>
+      </div></fieldset>
+      <fieldset><legend>Aquisição e venda</legend><div class="fgrid">
+        <div class="field"><label>Data de aquisição</label><input name="dataAquisicao" type="date"></div>
+        <div class="field"><label>Valor de aquisição (R$)</label><input name="valorAquisicao" type="text" inputmode="decimal" data-money step="0.01"></div>
+        <div class="field"><label>UN/Custo (R$)</label><input name="unCusto" type="text" inputmode="decimal" data-money step="0.01"></div>
+        <div class="field"><label>Valor contábil (R$)</label><input name="valorContabil" type="text" inputmode="decimal" data-money step="0.01"></div>
+        <div class="field"><label>Valor de mercado (R$)</label><input name="valorMercado" type="text" inputmode="decimal" data-money step="0.01"></div>
+        <div class="field"><label>Proposta de venda (R$)</label><input name="propostaVenda" type="text" inputmode="decimal" data-money data-calc step="0.01" id="inp-venda"></div>
+        <div class="field"><label>Comissão de venda (%)</label><input name="comissaoPct" type="number" step="0.01" min="0" max="100" id="inp-comissao" placeholder="ex.: 5"></div>
+        <div class="field"><label>Valor líquido fundo (R$)</label><input name="valorLiquidoFundo" type="text" inputmode="decimal" data-money data-calc step="0.01" id="inp-liquido" placeholder="auto: venda − comissão"></div>
+        <div class="field"><label>Condomínio mensal (R$)</label><input name="condominio" type="text" inputmode="decimal" data-money step="0.01"></div>
+        <div class="field"><label>Condomínio pago pelo fundo?</label><select name="condominioPagoFundo"><option value="">—</option><option>Sim, pago pelo fundo</option><option>Não — comprador/terceiro</option><option>Isento</option></select></div>
+        <div class="field"><label>IPTU anual (R$)</label><input name="iptu" type="text" inputmode="decimal" data-money step="0.01"></div>
+        <div class="field"><label>IPTU pago pelo fundo?</label><select name="iptuPagoFundo"><option value="">—</option><option>Sim, pago pelo fundo</option><option>Não — comprador/terceiro</option><option>Isento</option></select></div>
+      </div></fieldset>
+      <fieldset><legend>Fluxo de recebimento</legend>
+        <div class="subnote">Parcelas intermediárias do recebimento (quantidade livre). O <b>pagamento final</b> é o valor quitado na data de desligamento.</div>
+        <div class="rowed" id="rows-fluxo"></div>
+        <button type="button" class="btn sm" id="add-fluxo">+ Adicionar parcela</button>
+        <div class="rowtotal" id="tot-fluxo"></div>
+        <div class="fgrid" style="margin-top:12px">
+          <div class="field"><label>Pagamento final (R$)</label><input name="pagamentoFinal" type="text" inputmode="decimal" data-money data-tot step="0.01"></div>
+          <div class="field"><label>Data de desligamento</label><input name="desligamento" type="date"></div>
+        </div>
+      </fieldset>
+      <fieldset><legend>Custos do imóvel</legend>
+        <div class="subnote">Custos variáveis acumulados (reforma, ITBI, taxas, jurídico…). O total entra no cálculo de ROI e lucro.</div>
+        <div class="rowed" id="rows-custos"></div>
+        <button type="button" class="btn sm" id="add-custo">+ Adicionar custo</button>
+        <div class="rowtotal" id="tot-custos"></div>
+      </fieldset>
+      <fieldset><legend>Situação comercial</legend><div class="fgrid">
+        <div class="field"><label>Status da unidade</label><select name="status"><option>Disponível</option><option>Reservado</option><option>Em negociação</option><option>Vendido</option><option>Distratado</option><option>Bloqueado</option></select></div>
+        <div class="field"><label>Data de entrada em estoque</label><input name="dataEstoque" type="date"></div>
+      </div></fieldset>
+      <datalist id="dl-emps"></datalist>
+      <datalist id="dl-torres"></datalist>
+    </div>
+    <div class="mfoot"><button class="btn" value="cancel" type="submit" formnovalidate>Cancelar</button><button class="btn primary" value="save" type="submit">Salvar imóvel</button></div>
+  </form>
+</dialog>
+
+<!-- ============ MODAL PROPOSTA ============ -->
+<dialog id="dlg-prop">
+  <form method="dialog" id="frm-prop">
+    <div class="mhead"><h2>Nova proposta</h2><button class="btn sm" value="cancel" type="submit" formnovalidate>Fechar ✕</button></div>
+    <div class="mbody"><div class="fgrid">
+      <div class="field"><label>Imóvel</label><select name="imovelId" id="sel-imovel-prop" required></select></div>
+      <div class="field"><label>Cliente</label><input name="cliente" required></div>
+      <div class="field"><label>Corretor</label><input name="corretor" list="dl-corr" required></div>
+      <div class="field"><label>Data da proposta</label><input name="data" type="date" required></div>
+      <div class="field"><label>Valor ofertado (R$)</label><input name="valor" type="number" step="0.01" required></div>
+      <div class="field"><label>Forma de pagamento</label><select name="formaPgto"><option>À vista</option><option>Financiamento bancário</option><option>Parcelado direto</option><option>FGTS + financiamento</option><option>Permuta</option></select></div>
+      <div class="field"><label>Entrada (R$)</label><input name="entrada" type="number" step="0.01"></div>
+      <div class="field"><label>Nº de parcelas</label><input name="parcelas" type="number" min="0"></div>
+      <div class="field"><label>Etapa</label><select name="etapa"><option>Proposta recebida</option><option>Em análise</option><option>Aprovada</option><option>Contrato assinado</option><option>Vendida</option></select></div>
+    </div><datalist id="dl-corr"></datalist></div>
+    <div class="mfoot"><button class="btn" value="cancel" type="submit" formnovalidate>Cancelar</button><button class="btn primary" value="save" type="submit">Registrar proposta</button></div>
+  </form>
+</dialog>
+
+<!-- ============ MODAL FUNDO ============ -->
+<dialog id="dlg-fundo" class="narrow">
+  <form method="dialog" id="frm-fundo">
+    <div class="mhead"><h2 id="dlg-fundo-title">Cadastrar fundo</h2><button class="btn sm" value="cancel" type="submit" formnovalidate>Fechar ✕</button></div>
+    <div class="mbody"><div class="fgrid two">
+      <div class="field" style="grid-column:1/-1"><label>Nome do fundo</label><input name="nome" required placeholder="FII Exemplo Renda"></div>
+      <div class="field"><label>CNPJ</label><input name="cnpj" placeholder="00.000.000/0001-00" maxlength="18"></div>
+      <div class="field"><label>Nº de quotas</label><input name="quotas" type="number" min="1" required placeholder="1000000"></div>
+    </div></div>
+    <div class="mfoot"><button class="btn" value="cancel" type="submit" formnovalidate>Cancelar</button><button class="btn primary" value="save" type="submit">Salvar fundo</button></div>
+  </form>
+</dialog>
+
+<script>
+window.addEventListener("error", function(e){
+  var d=document.getElementById("jserr");
+  if(!d){ d=document.createElement("div"); d.id="jserr";
+    d.style.cssText="position:fixed;bottom:12px;left:12px;right:12px;z-index:9999;background:#B3402E;color:#fff;padding:12px 16px;border-radius:10px;font:13px/1.5 monospace;box-shadow:0 8px 30px rgba(0,0,0,.35)";
+    document.body.appendChild(d); }
+  d.textContent="Erro de JavaScript: "+e.message+(e.lineno?(" (linha "+e.lineno+")"):"")+" — verifique se as chaves do Supabase foram coladas entre aspas retas \" \" sem quebras de linha.";
+});
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   CONFIGURAÇÃO DO SUPABASE — cole a URL e a chave "anon public"
+   entre aspas retas, cada uma em UMA linha. Placeholders = modo local.
+===================================================================== */
+const CFG = window.PATRIMONIO_CONFIG || {};
+const SUPABASE_URL      = "https://gvozgtxkrspmzvvzxomb.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_OKjBqNDUynNhm9_FnR-M3A_x3NQLu0I";
+
+let FUNDOS = [], IMOVEIS = [], PROPOSTAS = [];
+let sb = null, NUVEM = false;
+
+/* ================= HELPERS ================= */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmtBR = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+const fmtBR4 = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL",minimumFractionDigits:2,maximumFractionDigits:4});
+const money = v => v==null||v===""||isNaN(v) ? "—" : fmtBR.format(+v);
+const money4 = v => v==null||isNaN(v) ? "—" : fmtBR4.format(+v);
+// ---- Máscara monetária (digitação em centavos, formato pt-BR) ----
+const fmtNum = new Intl.NumberFormat("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+function parseMoney(str){
+  if(str==null || str==="") return null;
+  if(typeof str==="number") return str;
+  const s=String(str).replace(/[^\d,-]/g,"").replace(/\./g,"").replace(",",".");
+  const n=parseFloat(s); return isNaN(n)?null:n;
+}
+function maskMoneyEl(el){
+  const digits=(el.value.match(/\d/g)||[]).join("").replace(/^0+/,"");
+  if(!digits){ el.value=""; return; }
+  const n=parseInt(digits,10)/100;
+  el.value=fmtNum.format(n);
+}
+function setMoneyEl(el, val){ el.value=(val==null||val==="")?"":fmtNum.format(+val); }
+function bindMoney(el){
+  if(el.dataset.moneyBound) return;
+  el.dataset.moneyBound="1";
+  el.addEventListener("input",()=>{ maskMoneyEl(el); if(el.dataset.calc) calcLiquido(); if(el.dataset.tot) updTotais(); });
+}
+// Aplica a todos os campos data-money do formulário
+function bindAllMoney(){ $$('[data-money]').forEach(bindMoney); }
+const pct = v => isNaN(v)||!isFinite(v) ? "—" : (v*100).toFixed(1).replace(".",",")+"%";
+const fmtD = s => s ? String(s).slice(0,10).split("-").reverse().join("/") : "—";
+const hoje = new Date();
+const dIso = d => d.toISOString().slice(0,10);
+const imvById = id => IMOVEIS.find(i=>i.id===+id);
+const fundoById = id => FUNDOS.find(f=>f.id===+id);
+const empreendimentos = () => [...new Set(IMOVEIS.map(i=>i.empreendimento).filter(Boolean))].sort();
+const corretores = () => [...new Set(PROPOSTAS.map(p=>p.corretor).filter(Boolean))].sort();
+const diasEstoque = i => i.dataEstoque ? Math.round((new Date(i.dataVenda||dIso(hoje)) - new Date(i.dataEstoque))/86400000) : 0;
+
+/* --- Regras financeiras --- */
+const totalCustos = i => (Array.isArray(i.custos)? i.custos.reduce((a,c)=>a+(+c.valor||0),0) : 0) + (+i.custosAcum||0);
+const totalFluxo  = i => (Array.isArray(i.fluxo)? i.fluxo.reduce((a,p)=>a+(+p.valor||0),0) : 0) + (+i.pagamentoFinal||0);
+// Valor líquido fundo: informado manualmente OU calculado como venda − comissão%
+const vlf = i => {
+  if(i.valorLiquidoFundo!=null && i.valorLiquidoFundo!=="" && !isNaN(i.valorLiquidoFundo)) return +i.valorLiquidoFundo;
+  if(i.propostaVenda!=null && i.propostaVenda!=="") return (+i.propostaVenda)*(1-(+i.comissaoPct||0)/100);
+  return null;
+};
+const roiImovel = i => {
+  const custo = (+i.unCusto||+i.valorAquisicao||0) + totalCustos(i);
+  const liq = vlf(i);
+  const saida = liq!=null ? liq : (+i.valorMercado||0);
+  return custo ? (saida-custo)/custo : NaN;
+};
+const excedenteRS = i => { const liq=vlf(i); return liq!=null ? liq-(+i.valorContabil||0) : 0; };
+const excedenteQuota = i => { const f=fundoById(i.fundoId); return f&&+f.quotas ? excedenteRS(i)/+f.quotas : 0; };
+
+const nomeImovel = i => i ? (i.nome || [i.tipo, i.torre||"", (i.ap?("· "+i.ap):"")].filter(Boolean).join(" ").replace(/\s+/g," ").trim() || i.codigo || "Imóvel") : "—";
+const badgeCls = s => ({"Disponível":"b-disp","Reservado":"b-res","Em negociação":"b-neg","Vendido":"b-vend","Distratado":"b-dist","Bloqueado":"b-bloq"})[s]||"b-bloq";
+const ETAPAS = ["Proposta recebida","Em análise","Aprovada","Contrato assinado","Vendida"];
+const C = {green:"#155446", green2:"#4E8A78", gold:"#B9892F", red:"#B3402E", blue:"#2D5C8A", grey:"#9AA6A0", ink:"#19231F"};
+let localSeq = 1;
+const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+
+function setSync(state, txt){
+  const el=$("#sync"); el.classList.remove("on","err");
+  if(state) el.classList.add(state);
+  $("#sync-txt").textContent = txt;
+}
+function showBanner(msg){ const b=$("#banner"); b.innerHTML=msg; b.classList.add("show"); }
+
+/* ================= CAMADA DE DADOS ================= */
+const rowToObj = r => Object.assign({id:r.id}, r.dados);
+const objToRow = o => { const d=Object.assign({},o); delete d.id; return {dados:d}; };
+
+async function dbLoad(){
+  if(!NUVEM) return;
+  setSync("", "Sincronizando…");
+  const [f,a,b] = await Promise.all([
+    sb.from("fundos").select("*").order("id"),
+    sb.from("imoveis").select("*").order("id"),
+    sb.from("propostas").select("*").order("id")
+  ]);
+  if(f.error||a.error||b.error){
+    const err = f.error||a.error||b.error;
+    setSync("err","Erro ao carregar — veja o console"); console.error(err);
+    let dica = "";
+    if(err && /schema cache|PGRST205/i.test(err.message||"")) dica = " <b>Correção:</b> no SQL Editor do Supabase, rode <code>NOTIFY pgrst, 'reload schema';</code> e recarregue esta página.";
+    else if(f.error) dica = " Se a tabela <b>fundos</b> não existir, rode o script <i>supabase-update-fundos.sql</i> no SQL Editor.";
+    showBanner("<b>Erro ao carregar do banco:</b> "+((err&&err.message)||"desconhecido")+"."+dica);
+    return;
+  }
+  FUNDOS = f.data.map(rowToObj);
+  IMOVEIS = a.data.map(rowToObj);
+  PROPOSTAS = b.data.map(rowToObj);
+  setSync("on","Conectado · tempo real");
+  renderAll();
+}
+
+async function dbSave(table, rec, arr){
+  if(!NUVEM){
+    if(rec.id){ Object.assign(arr.find(x=>x.id===rec.id), rec); } else { rec.id=localSeq++; arr.push(rec); }
+    return rec;
+  }
+  if(rec.id){
+    const {error} = await sb.from(table).update(objToRow(rec)).eq("id", rec.id);
+    if(error) throw error;
+    Object.assign(arr.find(x=>x.id===rec.id)||{}, rec);
+  } else {
+    const {data,error} = await sb.from(table).insert(objToRow(rec)).select().single();
+    if(error) throw error;
+    rec.id=data.id; arr.push(rec);
+  }
+  return rec;
+}
+const dbSaveImovel  = r => dbSave("imoveis", r, IMOVEIS);
+const dbSaveProposta= r => dbSave("propostas", r, PROPOSTAS);
+const dbSaveFundo   = r => dbSave("fundos", r, FUNDOS);
+
+async function dbDeleteImovel(id){
+  if(NUVEM){
+    let r = await sb.from("propostas").delete().eq("dados->>imovelId", String(id));
+    if(r.error) throw r.error;
+    r = await sb.from("imoveis").delete().eq("id", id);
+    if(r.error) throw r.error;
+  }
+  PROPOSTAS = PROPOSTAS.filter(p=>+p.imovelId!==+id);
+  IMOVEIS = IMOVEIS.filter(i=>i.id!==+id);
+}
+
+async function dbDeleteFundo(id){
+  if(NUVEM){
+    const r = await sb.from("fundos").delete().eq("id", id);
+    if(r.error) throw r.error;
+  }
+  FUNDOS = FUNDOS.filter(f=>f.id!==+id);
+}
+
+async function excluirFundo(id){
+  const f=fundoById(id);
+  if(!f) return;
+  const vinc=IMOVEIS.filter(i=>+i.fundoId===+id).length;
+  if(vinc){
+    alert(`O fundo "${f.nome}" possui ${vinc} imóvel(is) vinculado(s) e não pode ser excluído.\n\nPrimeiro mova esses imóveis para outro fundo (editando cada um) ou exclua-os do estoque.`);
+    return;
+  }
+  if(!confirm(`Excluir definitivamente o fundo "${f.nome}"?`)) return;
+  try{ await dbDeleteFundo(id); renderAll(); }
+  catch(e){ console.error(e); setSync("err","Falha ao excluir fundo"); alert("Não foi possível excluir o fundo no banco. Veja o console (F12)."); }
+}
+
+function initSupabase(){
+  const ok = SUPABASE_URL.startsWith("https://") && SUPABASE_ANON_KEY.length>40 && window.supabase;
+  if(!ok){
+    FUNDOS = [{id:1,nome:"FII Exemplo (modo local)",cnpj:"",quotas:1000000}];
+    showBanner("<b>Modo local:</b> os dados ficam apenas neste navegador e somem ao recarregar. Para conectar ao banco, verifique se o arquivo <b>config.js</b> está no repositório, ao lado do index.html, com a URL e a chave do Supabase preenchidas.");
+    setSync("", "Modo local (sem banco)");
+    renderAll();
+    return;
+  }
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  NUVEM = true;
+  let t=null;
+  const reload=()=>{ clearTimeout(t); t=setTimeout(dbLoad, 400); };
+  sb.channel("sync-fii")
+    .on("postgres_changes",{event:"*",schema:"public",table:"fundos"},reload)
+    .on("postgres_changes",{event:"*",schema:"public",table:"imoveis"},reload)
+    .on("postgres_changes",{event:"*",schema:"public",table:"propostas"},reload)
+    .subscribe(st=>{ if(st==="SUBSCRIBED") setSync("on","Conectado · tempo real"); });
+  dbLoad();
+}
+
+/* ================= NAVEGAÇÃO ================= */
+$$(".nav-btn").forEach(b=>b.addEventListener("click",()=>{
+  $$(".nav-btn").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  $$(".view").forEach(v=>v.classList.remove("active"));
+  $("#view-"+b.dataset.view).classList.add("active");
+  if(b.dataset.view==="dash") renderDash();
+}));
+
+/* ================= FUNDOS ================= */
+function renderFundos(){
+  const tb=$("#tb-fundos tbody"); tb.innerHTML="";
+  FUNDOS.forEach(f=>{
+    const vinc=IMOVEIS.filter(i=>+i.fundoId===+f.id);
+    const exc=vinc.reduce((a,i)=>a+excedenteRS(i),0);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><b>${esc(f.nome)}</b></td><td class="mono">${esc(f.cnpj)||"—"}</td>
+      <td class="mono r">${(+f.quotas||0).toLocaleString("pt-BR")}</td>
+      <td class="mono r">${vinc.length}</td>
+      <td class="mono r">${money(exc)}</td>
+      <td class="mono r">${+f.quotas? money4(exc/+f.quotas) : "—"}</td>
+      <td><button class="link" data-efundo="${f.id}">Editar</button> · <button class="link danger" data-dfundo="${f.id}">Excluir</button></td>`;
+    tb.appendChild(tr);
+  });
+  if(!FUNDOS.length) tb.innerHTML='<tr><td colspan="7" style="color:var(--ink-2);padding:24px">Nenhum fundo cadastrado. Use <b>+ Cadastrar fundo</b> — os imóveis precisam estar vinculados a um fundo.</td></tr>';
+  tb.querySelectorAll("[data-efundo]").forEach(b=>b.addEventListener("click",()=>openFundo(+b.dataset.efundo)));
+  tb.querySelectorAll("[data-dfundo]").forEach(b=>b.addEventListener("click",()=>excluirFundo(+b.dataset.dfundo)));
+  refreshFundoSelects();
+}
+function refreshFundoSelects(){
+  const sf=$("#sel-fundo"), cur=sf.value;
+  sf.innerHTML=""; FUNDOS.forEach(f=>sf.add(new Option(f.nome,f.id)));
+  if(cur) sf.value=cur;
+  const fd=$("#f-fundo-dash"), cur2=fd.value;
+  fd.innerHTML='<option value="">Todos os fundos</option>';
+  FUNDOS.forEach(f=>fd.add(new Option(f.nome,f.id)));
+  fd.value=cur2;
+}
+let editFundoId=null;
+$("#btn-novo-fundo").addEventListener("click",()=>openFundo(null));
+function openFundo(id){
+  editFundoId=id; const f=$("#frm-fundo"); f.reset();
+  $("#dlg-fundo-title").textContent = id? "Editar fundo" : "Cadastrar fundo";
+  if(id){ const fu=fundoById(id); f.elements.nome.value=fu.nome||""; f.elements.cnpj.value=fu.cnpj||""; f.elements.quotas.value=fu.quotas||""; }
+  $("#dlg-fundo").showModal();
+}
+$("#frm-fundo").elements.cnpj.addEventListener("input",function(){
+  let v=this.value.replace(/\D/g,"").slice(0,14);
+  if(v.length>12) v=v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2}).*/,"$1.$2.$3/$4-$5");
+  else if(v.length>8) v=v.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4}).*/,"$1.$2.$3/$4");
+  else if(v.length>5) v=v.replace(/^(\d{2})(\d{3})(\d{0,3}).*/,"$1.$2.$3");
+  else if(v.length>2) v=v.replace(/^(\d{2})(\d{0,3}).*/,"$1.$2");
+  this.value=v;
+});
+$("#dlg-fundo").addEventListener("close",async function(){
+  if(this.returnValue!=="save") return;
+  const f=$("#frm-fundo");
+  const rec={nome:f.elements.nome.value.trim(), cnpj:f.elements.cnpj.value.trim(), quotas:+f.elements.quotas.value||0};
+  if(editFundoId) rec.id=editFundoId;
+  try{ await dbSaveFundo(rec); renderAll(); }
+  catch(e){ console.error(e); setSync("err","Falha ao salvar fundo"); alert("Não foi possível salvar o fundo. A tabela 'fundos' existe no Supabase? Rode o script supabase-update-fundos.sql."); }
+});
+
+/* ================= EDITORES DE LINHAS (fluxo / custos) ================= */
+function addFluxoRow(data="", valor=""){
+  const div=document.createElement("div"); div.className="row";
+  div.innerHTML=`<input type="date" class="fx-data" value="${esc(data)}">
+    <input type="text" inputmode="decimal" class="fx-valor" placeholder="Valor (R$)" value="${valor!==''?fmtNum.format(+valor):''}">
+    <button type="button" class="rm" title="Remover">✕</button>`;
+  div.querySelector(".rm").addEventListener("click",()=>{ div.remove(); updTotais(); });
+  const fv=div.querySelector(".fx-valor"); fv.addEventListener("input",()=>{maskMoneyEl(fv);updTotais();});
+  $("#rows-fluxo").appendChild(div);
+}
+function addCustoRow(desc="", valor=""){
+  const div=document.createElement("div"); div.className="row c3";
+  div.innerHTML=`<input type="text" class="cs-desc" placeholder="Descrição (ex.: ITBI, reforma…)" value="${esc(desc)}">
+    <input type="text" inputmode="decimal" class="cs-valor" placeholder="Valor (R$)" value="${valor!==''?fmtNum.format(+valor):''}">
+    <button type="button" class="rm" title="Remover">✕</button>`;
+  div.querySelector(".rm").addEventListener("click",()=>{ div.remove(); updTotais(); });
+  const cv=div.querySelector(".cs-valor"); cv.addEventListener("input",()=>{maskMoneyEl(cv);updTotais();});
+  $("#rows-custos").appendChild(div);
+}
+function addIdRow(container, val=""){
+  const div=document.createElement("div"); div.className="row c2";
+  div.innerHTML=`<input type="text" class="id-val" placeholder="Identificação" value="${esc(val)}">
+    <button type="button" class="rm" title="Remover">✕</button>`;
+  div.querySelector(".rm").addEventListener("click",()=>div.remove());
+  document.querySelector(container).appendChild(div);
+}
+const collectIds = sel => $$(sel+" .id-val").map(x=>x.value.trim()).filter(Boolean);
+$("#add-garagem").addEventListener("click",()=>addIdRow("#rows-garagens"));
+$("#add-escaninho").addEventListener("click",()=>addIdRow("#rows-escaninhos"));
+$("#add-fluxo").addEventListener("click",()=>addFluxoRow());
+$("#add-custo").addEventListener("click",()=>addCustoRow());
+function collectFluxo(){ return $$("#rows-fluxo .row").map(r=>({data:r.querySelector(".fx-data").value, valor:parseMoney(r.querySelector(".fx-valor").value)||0})).filter(x=>x.valor||x.data); }
+function collectCustos(){ return $$("#rows-custos .row").map(r=>({desc:r.querySelector(".cs-desc").value.trim(), valor:parseMoney(r.querySelector(".cs-valor").value)||0})).filter(x=>x.valor||x.desc); }
+function updTotais(){
+  const f=$("#frm-imovel");
+  const tf=collectFluxo().reduce((a,x)=>a+x.valor,0)+(parseMoney(f.elements.pagamentoFinal.value)||0);
+  const tc=collectCustos().reduce((a,x)=>a+x.valor,0);
+  $("#tot-fluxo").textContent="Total do fluxo (parcelas + pagamento final): "+money(tf);
+  $("#tot-custos").textContent="Total de custos: "+money(tc);
+}
+
+/* Comissão → valor líquido automático */
+function calcLiquido(){
+  const f=$("#frm-imovel");
+  const venda=parseMoney(f.elements.propostaVenda.value), com=+f.elements.comissaoPct.value||0;
+  if(venda!=null) setMoneyEl(f.elements.valorLiquidoFundo, venda*(1-com/100));
+}
+$("#sel-indisp").addEventListener("change",function(){
+  const d=$("#inp-indisp-desc");
+  d.disabled = this.value!=="Sim";
+  if(d.disabled) d.value="";
+});
+$("#inp-comissao").addEventListener("input",calcLiquido);
+
+/* ================= ESTOQUE ================= */
+function renderEstoque(){
+  refreshEmpFilter();
+  const q = ($("#f-busca").value||"").toLowerCase();
+  const st = $("#f-status").value, emp = $("#f-emp").value;
+  const tb = $("#tb-imoveis tbody"); tb.innerHTML="";
+  IMOVEIS.filter(i=>
+    (!q || (nomeImovel(i)+(i.tipo||"")+(i.ap||"")+(i.codigo||"")+(i.empreendimento||"")).toLowerCase().includes(q)) &&
+    (!st || i.status===st) && (!emp || i.empreendimento===emp) &&
+    (!$("#f-ocultar-vendidos").checked || i.status!=="Vendido")
+  ).forEach(i=>{
+    const vendido = i.status==="Vendido";
+    const tr=document.createElement("tr");
+    const nGar=(i.garagens||[]).length, nEsc=(i.escaninhos||[]).length;
+    const subt=[i.areaTotal?i.areaTotal+" m²":"", (i.cidade||"")+(i.uf?"/"+i.uf:""), nGar?nGar+" vaga"+(nGar>1?"s":""):"", nEsc?nEsc+" escaninho"+(nEsc>1?"s":""):""].filter(Boolean).join(" · ");
+    const indisp = i.indisponivel==="Sim" ? ` <span class="badge b-dist" title="${esc(i.indisponibilidadeDesc)||"Restrição registrada"}">Indisponível</span>` : "";
+    tr.innerHTML = `<td class="mono">${esc(i.codigo)||"—"}</td><td><b>${esc(nomeImovel(i))}</b>${indisp}<br><span style="color:var(--ink-2);font-size:12px">${esc(subt)}</span></td>
+      <td class="mono">${esc(i.ap)||"—"}</td><td>${esc(i.empreendimento)||"—"}</td>
+      <td><span class="badge ${badgeCls(i.status)}">${i.status}</span></td>
+      <td class="mono r">${money(i.unCusto)}</td><td class="mono r">${money(i.propostaVenda)}</td>
+      <td class="mono r">${money(totalCustos(i))}</td>
+      <td class="mono r">${money(vlf(i))}</td>
+      <td class="mono r">${money4(excedenteQuota(i))}</td>
+      <td class="mono r">${money(excedenteRS(i))}</td>
+      <td class="mono r" style="color:${roiImovel(i)>=0?C.green:C.red}">${pct(roiImovel(i))}</td>
+      <td class="mono">${fmtD(i.desligamento)}</td>
+      <td><button class="link" data-edit="${i.id}">Editar</button>${vendido?"":' · <button class="link danger" data-del="'+i.id+'">Excluir</button>'}</td>`;
+    tb.appendChild(tr);
+  });
+  if(!tb.children.length){
+    tb.innerHTML = IMOVEIS.length
+      ? '<tr><td colspan="14" style="color:var(--ink-2);padding:22px">Nenhum imóvel corresponde aos filtros aplicados.</td></tr>'
+      : '<tr><td colspan="14" style="color:var(--ink-2);padding:26px">Estoque vazio. Use <b>+ Cadastrar imóvel</b> para registrar a primeira unidade do portfólio.</td></tr>';
+  }
+  tb.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>openImovel(+b.dataset.edit)));
+  tb.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>excluirImovel(+b.dataset.del)));
+}
+
+async function excluirImovel(id){
+  const i=imvById(id);
+  if(!i) return;
+  if(i.status==="Vendido"){ alert("Imóveis vendidos não podem ser excluídos — eles compõem o histórico de receita e lucro do fundo. Use o filtro de status para ocultá-los."); return; }
+  const nProp=PROPOSTAS.filter(p=>+p.imovelId===id).length;
+  const msg = `Excluir definitivamente "${nomeImovel(i)}"?`+(nProp?`\n\nAtenção: ${nProp} proposta(s) vinculada(s) também serão excluídas.`:"");
+  if(!confirm(msg)) return;
+  try{ await dbDeleteImovel(id); renderAll(); }
+  catch(e){ console.error(e); setSync("err","Falha ao excluir"); alert("Não foi possível excluir no banco. Veja o console (F12)."); }
+}
+
+function refreshEmpFilter(){
+  const fe=$("#f-emp"), cur=fe.value;
+  fe.innerHTML='<option value="">Empreendimento: todos</option>';
+  empreendimentos().forEach(e=>fe.add(new Option(e,e)));
+  fe.value=cur;
+  const dl=$("#dl-emps"); dl.innerHTML="";
+  empreendimentos().forEach(e=>{const o=document.createElement("option");o.value=e;dl.appendChild(o);});
+  const dc=$("#dl-corr"); dc.innerHTML="";
+  corretores().forEach(c=>{const o=document.createElement("option");o.value=c;dc.appendChild(o);});
+  const dt=$("#dl-torres"); if(dt){ dt.innerHTML=""; [...new Set(IMOVEIS.map(i=>i.torre).filter(Boolean))].sort().forEach(t=>{const o=document.createElement("option");o.value=t;dt.appendChild(o);}); }
+}
+function fillStatic(){
+  const st=$("#f-status");
+  ["Disponível","Reservado","Em negociação","Vendido","Distratado","Bloqueado"].forEach(s=>st.add(new Option("Status: "+s,s)));
+}
+["f-busca","f-status","f-emp","f-ocultar-vendidos"].forEach(id=>$("#"+id).addEventListener("input",renderEstoque));
+
+/* ----- Cadastro / edição de imóvel ----- */
+let editId=null;
+const DRAFT_KEY="patrimonio_fii_draft_imovel";
+let draftTimer=null;
+function snapshotForm(){
+  const f=$("#frm-imovel"), d={_fluxo:collectFluxo(),_custos:collectCustos(),
+    _garagens:collectIds("#rows-garagens"),_escaninhos:collectIds("#rows-escaninhos")};
+  [...f.elements].forEach(el=>{ if(el.name) d[el.name]=el.value; });
+  return d;
+}
+function saveDraft(){
+  if(editId) return; // rascunho só para cadastro novo, nunca sobrescreve edição
+  try{ sessionStorage.setItem(DRAFT_KEY, JSON.stringify(snapshotForm())); }catch(e){}
+  const s=$("#draft-status"); if(s){ s.textContent="Rascunho salvo ✓";
+    clearTimeout(draftTimer); draftTimer=setTimeout(()=>{ if(s) s.textContent=""; },1500); }
+}
+function hasDraft(){ try{ return !!sessionStorage.getItem(DRAFT_KEY); }catch(e){ return false; } }
+function clearDraft(){ try{ sessionStorage.removeItem(DRAFT_KEY); }catch(e){} }
+function restoreDraft(){
+  let d; try{ d=JSON.parse(sessionStorage.getItem(DRAFT_KEY)); }catch(e){ return; }
+  if(!d) return;
+  const f=$("#frm-imovel");
+  [...f.elements].forEach(el=>{ if(el.name && d[el.name]!=null) el.value=d[el.name]; });
+  (d._fluxo||[]).forEach(p=>addFluxoRow(p.data,p.valor));
+  (d._custos||[]).forEach(c=>addCustoRow(c.desc,c.valor));
+  (d._garagens||[]).forEach(g=>addIdRow("#rows-garagens",g));
+  (d._escaninhos||[]).forEach(e2=>addIdRow("#rows-escaninhos",e2));
+}
+// autosave contínuo enquanto o modal de cadastro está aberto
+$("#frm-imovel").addEventListener("input",()=>{ if(!editId) saveDraft(); });
+$("#btn-novo").addEventListener("click",()=>{
+  if(!FUNDOS.length){ alert("Cadastre primeiro um fundo na aba Fundos — todo imóvel precisa estar vinculado a um fundo."); return; }
+  openImovel(null);
+});
+function openImovel(id){
+  editId=id; const f=$("#frm-imovel"); f.reset();
+  $("#rows-fluxo").innerHTML=""; $("#rows-custos").innerHTML="";
+  $("#rows-garagens").innerHTML=""; $("#rows-escaninhos").innerHTML="";
+  $("#dlg-title").textContent = id ? "Editar imóvel" : "Cadastrar imóvel";
+  refreshFundoSelects();
+  if(id){
+    const i=imvById(id);
+    [...f.elements].forEach(el=>{
+      if(el.name && i[el.name]!=null && !Array.isArray(i[el.name])){
+        if(el.hasAttribute("data-money")) setMoneyEl(el, i[el.name]); else el.value=i[el.name];
+      }
+    });
+    (i.fluxo||[]).forEach(p=>addFluxoRow(p.data,p.valor));
+    // migra parcelas antigas (Parcela 1/2) para o fluxo
+    if(!i.fluxo){ if(+i.parcela1) addFluxoRow("",i.parcela1); if(+i.parcela2) addFluxoRow("",i.parcela2); }
+    (i.custos||[]).forEach(c=>addCustoRow(c.desc,c.valor));
+    (i.garagens||[]).forEach(g=>addIdRow("#rows-garagens",g));
+    if(!i.garagens && +i.vagas) for(let k=1;k<=+i.vagas;k++) addIdRow("#rows-garagens","Vaga "+k);
+    (i.escaninhos||[]).forEach(e2=>addIdRow("#rows-escaninhos",e2));
+    if(!i.custos && +i.custosAcum) addCustoRow("Custos acumulados (legado)", i.custosAcum);
+  } else {
+    const n = IMOVEIS.length ? Math.max(...IMOVEIS.map(i=>i.id||0))+1 : 1;
+    f.elements.codigo.value="IMV-"+String(n).padStart(3,"0");
+    f.elements.dataEstoque.value=dIso(hoje);
+    if(hasDraft() && confirm("Há um cadastro não finalizado. Deseja continuar de onde parou?")) restoreDraft();
+    else clearDraft();
+  }
+  updTotais();
+  $("#sel-indisp").dispatchEvent(new Event("change"));
+  $("#dlg-imovel").showModal();
+}
+$("#frm-imovel").elements.pagamentoFinal.addEventListener("input",updTotais);
+$("#dlg-imovel").addEventListener("cancel",e=>e.preventDefault());
+$("#dlg-fundo").addEventListener("cancel",e=>e.preventDefault());
+$("#dlg-imovel").addEventListener("close",async function(){
+  if(this.returnValue!=="save") return;
+  const f=$("#frm-imovel"), rec={};
+  [...f.elements].forEach(el=>{
+    if(!el.name) return;
+    if(el.hasAttribute("data-money")) rec[el.name]=parseMoney(el.value);
+    else if(el.type==="number") rec[el.name]=(el.value===""?null:+el.value);
+    else rec[el.name]=el.value;
+  });
+  rec.fundoId=+rec.fundoId;
+  rec.fluxo=collectFluxo();
+  rec.custos=collectCustos();
+  rec.garagens=collectIds("#rows-garagens");
+  rec.escaninhos=collectIds("#rows-escaninhos");
+  delete rec.nome; delete rec.vagas; delete rec.areaPriv; // unificados/removidos
+  delete rec.custosAcum; delete rec.parcela1; delete rec.parcela2; // migrado para listas
+  if(editId) rec.id=editId;
+  try{ await dbSaveImovel(rec); clearDraft(); renderAll(); }
+  catch(e){ console.error(e); setSync("err","Falha ao salvar — veja o console"); alert("Não foi possível salvar no banco. Verifique a conexão e as políticas do Supabase."); }
+});
+
+/* ================= PIPELINE ================= */
+$("#btn-nova-prop").addEventListener("click",()=>{
+  const sel=$("#sel-imovel-prop"); sel.innerHTML="";
+  const livres=IMOVEIS.filter(i=>!["Vendido","Distratado","Bloqueado"].includes(i.status));
+  if(!livres.length){ alert("Cadastre ao menos um imóvel disponível antes de registrar propostas."); return; }
+  livres.forEach(i=>sel.add(new Option((i.codigo||"")+" · "+nomeImovel(i)+" — "+(i.empreendimento||""),i.id)));
+  const f=$("#frm-prop"); f.reset(); f.elements.data.value=dIso(hoje);
+  $("#dlg-prop").showModal();
+});
+$("#dlg-prop").addEventListener("close",async function(){
+  if(this.returnValue!=="save") return;
+  const f=$("#frm-prop"), rec={};
+  [...f.elements].forEach(el=>{ if(el.name) rec[el.name]=el.type==="number"?+el.value||0:el.value; });
+  rec.imovelId=+rec.imovelId;
+  try{
+    await dbSaveProposta(rec);
+    const i=imvById(rec.imovelId);
+    if(i && i.status==="Disponível"){ i.status="Em negociação"; await dbSaveImovel(i); }
+    renderAll();
+  }catch(e){ console.error(e); setSync("err","Falha ao salvar — veja o console"); alert("Não foi possível salvar a proposta no banco."); }
+});
+
+async function avancar(p, btn){
+  if(btn) btn.disabled=true;
+  const idx=ETAPAS.indexOf(p.etapa);
+  if(idx<ETAPAS.length-1) p.etapa=ETAPAS[idx+1];
+  const i=imvById(p.imovelId);
+  try{
+    await dbSaveProposta(p);
+    if(i){
+      if(p.etapa==="Aprovada"||p.etapa==="Contrato assinado") i.status="Reservado";
+      if(p.etapa==="Vendida"){
+        i.status="Vendido"; i.dataVenda=dIso(hoje);
+        const liquidoVenda=(+p.valor||0)*(1-(+i.comissaoPct||0)/100);
+        i.valorLiquidoFundo=liquidoVenda;
+        i.lucroRealizado=liquidoVenda-(+i.unCusto||0)-totalCustos(i);
+      }
+      await dbSaveImovel(i);
+    }
+    renderAll();
+  }catch(e){ console.error(e); setSync("err","Falha ao salvar — veja o console"); }
+}
+async function recusar(p){ p.etapa="Recusada"; try{ await dbSaveProposta(p); }catch(e){console.error(e);} renderPipeline(); }
+
+function renderPipeline(){
+  const kb=$("#kanban"); kb.innerHTML="";
+  const cols=["Disponível",...ETAPAS];
+  cols.forEach(col=>{
+    const div=document.createElement("div"); div.className="kcol";
+    let cards="";
+    if(col==="Disponível"){
+      const list=IMOVEIS.filter(i=>i.status==="Disponível");
+      cards=list.map(i=>`<div class="kcard" style="border-left-color:${C.grey}"><div class="t">${esc(nomeImovel(i))}</div><div class="m">${esc(i.empreendimento)||""}</div><div class="v">${money(i.propostaVenda)}</div></div>`).join("");
+      div.innerHTML=`<h4>Disponível <span class="cnt">${list.length}</span></h4>${cards||'<div style="color:var(--ink-2);font-size:12px">Nenhuma unidade livre.</div>'}`;
+    } else {
+      const list=PROPOSTAS.filter(p=>p.etapa===col);
+      cards=list.map(p=>{
+        const i=imvById(p.imovelId);
+        const acts = col==="Vendida" ? "" : `<div class="acts"><button class="btn sm primary" data-adv="${p.id}">Avançar →</button><button class="btn sm" data-rec="${p.id}">Recusar</button></div>`;
+        return `<div class="kcard"><div class="t">${esc(nomeImovel(i))}</div><div class="m">${esc(p.cliente)} · ${esc(p.corretor)}</div><div class="m">${fmtD(p.data)} · ${esc(p.formaPgto)}</div><div class="v">${money(p.valor)}</div>${acts}</div>`;
+      }).join("");
+      div.innerHTML=`<h4>${col} <span class="cnt">${list.length}</span></h4>${cards||'<div style="color:var(--ink-2);font-size:12px">Sem propostas nesta etapa.</div>'}`;
+    }
+    kb.appendChild(div);
+  });
+  kb.querySelectorAll("[data-adv]").forEach(b=>b.addEventListener("click",()=>avancar(PROPOSTAS.find(p=>p.id===+b.dataset.adv), b)));
+  kb.querySelectorAll("[data-rec]").forEach(b=>b.addEventListener("click",()=>recusar(PROPOSTAS.find(p=>p.id===+b.dataset.rec))));
+
+  const tb=$("#tb-prop tbody"); tb.innerHTML="";
+  [...PROPOSTAS].sort((a,b)=>String(b.data).localeCompare(String(a.data))).forEach(p=>{
+    const i=imvById(p.imovelId);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><b>${esc(nomeImovel(i))}</b></td><td>${esc(p.cliente)}</td><td>${esc(p.corretor)}</td><td class="mono">${fmtD(p.data)}</td>
+      <td class="mono r">${money(p.valor)}</td><td>${esc(p.formaPgto)}</td><td class="mono r">${money(p.entrada)}</td>
+      <td class="mono r">${p.parcelas||"—"}</td><td><span class="badge ${p.etapa==="Vendida"?"b-vend":p.etapa==="Recusada"?"b-dist":"b-neg"}">${p.etapa}</span></td>
+      <td>${["Vendida","Recusada"].includes(p.etapa)?"":'<button class="link" data-adv2="'+p.id+'">Avançar</button>'}</td>`;
+    tb.appendChild(tr);
+  });
+  if(!tb.children.length) tb.innerHTML='<tr><td colspan="10" style="color:var(--ink-2);padding:22px">Nenhuma proposta registrada. Use <b>+ Nova proposta</b> após cadastrar imóveis no estoque.</td></tr>';
+  tb.querySelectorAll("[data-adv2]").forEach(b=>b.addEventListener("click",()=>avancar(PROPOSTAS.find(p=>p.id===+b.dataset.adv2), b)));
+}
+
+/* ================= DASHBOARD ================= */
+const charts={};
+function mkChart(id,cfg){
+  if(!window.Chart) return;
+  if(charts[id]) charts[id].destroy(); charts[id]=new Chart($("#"+id),cfg);
+}
+if(window.Chart){
+  Chart.defaults.font.family="'IBM Plex Sans',sans-serif";
+  Chart.defaults.color="#54625B";
+}
+function kpiCard(lbl,val,delta){
+  return `<div class="card kpi"><div class="lbl">${lbl}</div><div class="val">${val}</div>${delta?`<div class="delta">${delta}</div>`:""}</div>`;
+}
+
+function renderDash(){
+  $("#dash-date").textContent = "atualizado em "+hoje.toLocaleDateString("pt-BR");
+  const fId = $("#f-fundo-dash").value;
+  const IM = fId ? IMOVEIS.filter(i=>+i.fundoId===+fId) : IMOVEIS;
+  const ids = new Set(IM.map(i=>i.id));
+  const PR = PROPOSTAS.filter(p=>ids.has(+p.imovelId));
+  const sum=(arr,f)=>arr.reduce((a,x)=>a+(+f(x)||0),0);
+
+  const cnt = s => IM.filter(i=>i.status===s).length;
+  const vendidos=cnt("Vendido"), total=IM.length;
+  $("#kpi-estoque").innerHTML =
+    kpiCard("Imóveis no portfólio", total) +
+    kpiCard("Disponíveis", cnt("Disponível")) +
+    kpiCard("Reservados", cnt("Reservado")) +
+    kpiCard("Em negociação", cnt("Em negociação")) +
+    kpiCard("Vendidos", vendidos) +
+    kpiCard("Taxa de venda", total? pct(vendidos/total) : "—", "vendidos / portfólio");
+
+  const estoqueAtivo = IM.filter(i=>i.status!=="Vendido" && i.status!=="Distratado");
+  const vendidosArr = IM.filter(i=>i.status==="Vendido");
+  $("#kpi-fin").innerHTML =
+    kpiCard("Valor total do estoque", money(sum(estoqueAtivo,i=>i.propostaVenda)), "preço de venda pedido") +
+    kpiCard("Valor contábil", money(sum(estoqueAtivo,i=>i.valorContabil))) +
+    kpiCard("Valor de mercado", money(sum(estoqueAtivo,i=>i.valorMercado))) +
+    kpiCard("Receita realizada", money(sum(vendidosArr,i=>vlf(i))), "líquida de comissão") +
+    kpiCard("Receita projetada", money(sum(estoqueAtivo,i=>vlf(i))), "estoque ativo, líquida") +
+    kpiCard("Lucro realizado", money(sum(vendidosArr,i=>i.lucroRealizado))) +
+    kpiCard("Lucro projetado", money(sum(estoqueAtivo,i=>{const l=vlf(i); return l==null?0:l-(+i.unCusto||0)-totalCustos(i);})));
+
+  const labels=[],real=[];
+  for(let m=11;m>=0;m--){
+    const d=new Date(hoje.getFullYear(),hoje.getMonth()-m,1);
+    labels.push(d.toLocaleDateString("pt-BR",{month:"short"}));
+    const key=d.toISOString().slice(0,7);
+    real.push(Math.round(sum(vendidosArr.filter(i=>String(i.dataVenda||"").startsWith(key)),i=>vlf(i))/1000));
+  }
+  const positivos=real.filter(v=>v>0);
+  const media = positivos.length? positivos.reduce((a,b)=>a+b,0)/positivos.length : 0;
+  const proj = real.map((v,i)=>i>=9 && media? Math.round(media*1.08) : null);
+  mkChart("ch-receita",{type:"bar",data:{labels,datasets:[
+    {label:"Realizada",data:real,backgroundColor:C.green,borderRadius:4},
+    {label:"Projetada",data:proj,backgroundColor:C.gold,borderRadius:4}
+  ]},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}},scales:{y:{grid:{color:"#EEECE4"}},x:{grid:{display:false}}}}});
+
+  const stLabels=["Disponível","Reservado","Em negociação","Vendido","Distratado","Bloqueado"];
+  mkChart("ch-status",{type:"doughnut",data:{labels:stLabels,datasets:[{data:stLabels.map(cnt),backgroundColor:[C.green,C.gold,C.blue,C.ink,C.red,C.grey],borderWidth:2,borderColor:"#fff"}]},
+    options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
+
+  const funil=ETAPAS.map(e=>PR.filter(p=>p.etapa===e).length);
+  for(let i=funil.length-2;i>=0;i--) funil[i]+=funil[i+1];
+  mkChart("ch-funil",{type:"bar",data:{labels:["Recebida","Análise","Aprovada","Contrato","Vendida"],datasets:[{data:funil,backgroundColor:[C.grey,C.blue,C.gold,C.green2,C.green],borderRadius:4}]},
+    options:{indexAxis:"y",maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"#EEECE4"},ticks:{precision:0}},y:{grid:{display:false}}}}});
+
+  const empAgg = empreendimentos().map(e=>({n:e, v:sum(vendidosArr.filter(i=>i.empreendimento===e),i=>vlf(i))/1000})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,8);
+  mkChart("ch-emp",{type:"bar",data:{labels:empAgg.map(x=>x.n),datasets:[{data:empAgg.map(x=>Math.round(x.v)),backgroundColor:C.green,borderRadius:4}]},
+    options:{indexAxis:"y",maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"#EEECE4"}},y:{grid:{display:false}}}}});
+
+  const corrAgg = corretores().map(c=>({c, n:PR.filter(p=>p.corretor===c&&p.etapa==="Vendida").length})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n).slice(0,8);
+  mkChart("ch-corr",{type:"bar",data:{labels:corrAgg.map(x=>x.c),datasets:[{data:corrAgg.map(x=>x.n),backgroundColor:C.gold,borderRadius:4}]},
+    options:{indexAxis:"y",maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"#EEECE4"},ticks:{precision:0}},y:{grid:{display:false}}}}});
+
+  const vendas=PR.filter(p=>p.etapa==="Vendida");
+  const conv = PR.length? vendas.length/PR.length : NaN;
+  const ticket = vendas.length? sum(vendas,p=>p.valor)/vendas.length : NaN;
+  const tmv = vendidosArr.length? vendidosArr.reduce((a,i)=>a+diasEstoque(i),0)/vendidosArr.length : NaN;
+  $("#kpi-com").innerHTML =
+    kpiCard("Conversão de propostas", pct(conv), PR.length? vendas.length+" de "+PR.length+" propostas":"") +
+    kpiCard("Ticket médio", isNaN(ticket)?"—":money(ticket)) +
+    kpiCard("Tempo médio de venda", isNaN(tmv)?"—":Math.round(tmv)+" dias", "entrada em estoque → venda") +
+    kpiCard("Propostas ativas", PR.filter(p=>!["Vendida","Recusada"].includes(p.etapa)).length);
+}
+$("#f-fundo-dash").addEventListener("change",renderDash);
+
+/* ================= BOOT ================= */
+function renderAll(){
+  try{ renderFundos(); }catch(e){ console.error(e); }
+  try{ renderEstoque(); }catch(e){ console.error(e); }
+  try{ renderPipeline(); }catch(e){ console.error(e); }
+  try{ renderDash(); }catch(e){ console.error(e); }
+}
+try{ bindAllMoney(); fillStatic(); }catch(e){ console.error(e); }
+renderAll();
+try{ initSupabase(); }catch(e){ console.error(e); setSync("err","Configuração do Supabase inválida"); }
+
+</script>
+</body>
+</html>
